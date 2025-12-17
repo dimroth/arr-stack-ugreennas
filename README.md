@@ -12,17 +12,26 @@ This project provides configuration files for **legal, open-source software** de
 
 ---
 
-## Getting Started with Claude Code (Recommended)
+## Getting Started
 
-This project works great with [Claude Code](https://claude.ai/claude-code). Instead of manually following the documentation, you can let Claude read the setup guides and walk you through deployment step-by-step.
+**Two ways to deploy this stack:**
 
-1. Install Claude Code: `npm install -g @anthropic-ai/claude-code`
-2. Clone this repo and open it: `cd arr-stack-ugreennas && claude`
-3. Ask Claude to help deploy the stack - it reads the [`.claude/instructions.md`](.claude/instructions.md) file automatically
+- **Manual setup** - Follow the [Quick Start](#quick-start) below and the [docs/](docs/) folder
+- **Guided setup with Claude Code** - AI walks you through it interactively (see below)
 
-Claude understands the service networking, Traefik routing, deployment order, and common gotchas documented in this project. It can execute commands on your NAS and troubleshoot issues as they arise.
+<details>
+<summary>Using Claude Code for guided setup</summary>
 
-> **Prefer manual setup?** No problem - see [Quick Start](#quick-start) below and the [docs/](docs/) folder for complete documentation.
+[Claude Code](https://claude.ai/claude-code) can read the setup guides and walk you through deployment step-by-step, executing commands and troubleshooting as you go.
+
+```bash
+npm install -g @anthropic-ai/claude-code
+cd arr-stack-ugreennas && claude
+```
+
+Ask Claude to help deploy the stack - it reads the [`.claude/instructions.md`](.claude/instructions.md) file automatically.
+
+</details>
 
 ---
 
@@ -156,7 +165,7 @@ This project separates public documentation from private configuration:
 | **Private config** | `.claude/config.local.md` | ❌ No (gitignored) | Actual hostnames, IPs, usernames for your deployment |
 | **Credentials** | `.env` | ❌ No (gitignored) | Passwords, API tokens, private keys |
 
-**Why?** This allows sharing the project publicly while keeping your specific configuration private. Claude Code reads `config.local.md` to understand your environment without exposing secrets.
+**Why?** This allows sharing the project publicly while keeping your specific configuration private. If using Claude Code, it reads `config.local.md` to understand your environment.
 
 **Setup**: Copy `.claude/config.local.md.example` to `.claude/config.local.md` and fill in your values.
 
