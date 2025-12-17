@@ -38,8 +38,6 @@ Complete setup guide for the media automation stack. Works on any Docker host wi
 - **Domain Name** (~$8-10/year)
 - **Cloudflare Account** (free tier)
 
-> **Local-only?** Skip domain and Cloudflare. Access services via `http://HOST_IP:PORT`.
-
 ---
 
 ## Step 1: Create Directories and Clone/Fork Repository
@@ -60,7 +58,7 @@ Folders created via SSH don't appear in UGOS Files app. Create top-level folders
 1. Open UGOS web interface → **Files** app
 2. Create shared folders: **Media**, **docker**
 3. Inside **Media**, create subfolders: **downloads**, **tv**, **movies**
-4. Via SSH, install git and clone the repo:
+4. Via SSH, install git and clone:
 
 ```bash
 ssh your-username@nas-ip
@@ -68,9 +66,9 @@ ssh your-username@nas-ip
 # Install git (Ugreen NAS uses Debian)
 sudo apt-get update && sudo apt-get install -y git
 
-# Clone the repository
+# Clone the repo
 cd /volume1/docker
-sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack
+sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /volume1/docker/arr-stack
 
 # Create additional config directories
@@ -97,9 +95,9 @@ ssh your-username@nas-ip
 # Install git if not present (Synology)
 sudo synopkg install Git
 
-# Clone the repository
+# Clone the repo
 cd /volume1/docker
-sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack
+sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /volume1/docker/arr-stack
 
 # Create additional config directories
@@ -121,9 +119,9 @@ sudo apt-get update && sudo apt-get install -y git
 sudo mkdir -p /srv/media/{downloads,tv,movies}
 sudo chown -R 1000:1000 /srv/media
 
-# Clone the repository
+# Clone the repo
 cd /srv/docker
-sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack
+sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /srv/docker/arr-stack
 
 # Create additional config directories
