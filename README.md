@@ -99,26 +99,6 @@ Skip the domain and access services directly via IP:port. All services work out 
 
 ---
 
-## External Access
-
-**Cloudflare Tunnel (recommended)** - Bypasses port forwarding entirely. Works even with CGNAT or ISP-blocked ports. See [Cloudflare Tunnel Setup](docs/CLOUDFLARE-TUNNEL-SETUP.md).
-
-> **Why not port forwarding?** Port forwarding often fails due to CGNAT (~30% of ISPs) or blocked ports. Cloudflare Tunnel connects outbound from your NAS, avoiding these issues entirely.
-
-<details>
-<summary>Alternative: Port forwarding (if not using Cloudflare Tunnel)</summary>
-
-The Ugreen NAS web interface (nginx) uses ports 80/443. Rather than modifying nginx (which UGOS auto-repairs), Traefik uses ports 8080/8443 instead.
-
-Configure router port forwarding:
-- External 80 → NAS:8080
-- External 443 → NAS:8443
-- External 51820/udp → NAS:51820 (for WireGuard)
-
-</details>
-
----
-
 ## Quick Start
 
 > The instructions below assume **Option A (with domain)**. For local-only, see above.
