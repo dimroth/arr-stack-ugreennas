@@ -83,19 +83,22 @@ services:
   # Disk Usage Analyzer (duc)                #
   #############################################
   # Visual disk usage analyzer with treemap UI (like DaisyDisk).
-  # Re-indexes daily at midnight. Access at http://NAS_IP:8838
-  # Manual re-index: docker restart duc
+  # Access at http://NAS_IP:8838
+  # Re-index manually: docker exec duc duc index /data
   duc:
-    image: mkoestler/duc-service:latest
+    image: zevv/duc:latest
     container_name: duc
     volumes:
-      - /volume1:/scan/volume1:ro      # NAS data (read-only)
-      - duc-index:/database            # Persistent index
+      - /volume1:/data:ro              # NAS data (read-only)
+      - duc-index:/duc                 # Persistent index
     ports:
-      - "8838:80"                      # Web UI
+      - "8838:8000"                    # Web UI
     environment:
       - TZ=${TZ:-Europe/London}
-      - SCHEDULE=0 0 * * *             # Re-index daily at midnight
+    # Index on startup, then serve web UI
+    command: >
+      sh -c "duc index -d /duc/duc.db /data &&
+             duc ui -d /duc/duc.db --interface=0.0.0.0 --port=8000 /data"
     networks:
       traefik-proxy:
         ipv4_address: 192.168.100.14
