@@ -165,7 +165,20 @@ sudo chmod 600 /srv/docker/arr-stack/traefik/acme.json
 cp .env.example .env
 ```
 
-### 2.2 VPN Configuration
+### 2.2 Media Storage Path
+
+Set `MEDIA_ROOT` in `.env` to match your media folder location:
+
+```bash
+# Examples:
+MEDIA_ROOT=/volume1/Media     # Ugreen, Synology
+MEDIA_ROOT=/share/Media       # QNAP
+MEDIA_ROOT=/srv/media         # Linux server
+```
+
+This path should contain (or will contain) your `downloads`, `tv`, and `movies` subfolders.
+
+### 2.3 VPN Configuration
 
 Gluetun supports 30+ VPN providers. Configuration varies by provider.
 
@@ -215,7 +228,7 @@ Update `.env` with your provider's required variables.
 
 </details>
 
-### 2.3 Service Passwords
+### 2.4 Service Passwords
 
 **Pi-hole Password:**
 

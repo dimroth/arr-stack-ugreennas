@@ -114,8 +114,8 @@ services:
       - DOCKER_MODS=ghcr.io/vuetorrent/vuetorrent-lsio-mod:latest
     volumes:
       - qbittorrent-config:/config
-      - /volume1/Media/downloads:/downloads
-      - /volume1/Media:/media
+      - ${MEDIA_ROOT:-/volume1/Media}/downloads:/downloads
+      - ${MEDIA_ROOT:-/volume1/Media}:/media
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
@@ -142,8 +142,8 @@ services:
       - TZ=${TZ:-Europe/London}
     volumes:
       - sonarr-config:/config
-      - /volume1/Media/tv:/tv
-      - /volume1/Media/downloads:/downloads
+      - ${MEDIA_ROOT:-/volume1/Media}/tv:/tv
+      - ${MEDIA_ROOT:-/volume1/Media}/downloads:/downloads
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
@@ -196,8 +196,8 @@ services:
       - TZ=${TZ:-Europe/London}
     volumes:
       - radarr-config:/config
-      - /volume1/Media/movies:/movies
-      - /volume1/Media/downloads:/downloads
+      - ${MEDIA_ROOT:-/volume1/Media}/movies:/movies
+      - ${MEDIA_ROOT:-/volume1/Media}/downloads:/downloads
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
@@ -224,8 +224,8 @@ services:
       - PLEX_CLAIM=${PLEX_CLAIM}  # Get from https://plex.tv/claim (expires in 4 mins)
     volumes:
       - plex-config:/config
-      - /volume1/Media/movies:/media/movies:ro
-      - /volume1/Media/tv:/media/tv:ro
+      - ${MEDIA_ROOT:-/volume1/Media}/movies:/media/movies:ro
+      - ${MEDIA_ROOT:-/volume1/Media}/tv:/media/tv:ro
     networks:
       traefik-proxy:
         ipv4_address: 192.168.100.4
@@ -361,8 +361,8 @@ services:
         ipv4_address: 192.168.100.9
     volumes:
       - bazarr-config:/config
-      - /volume1/Media/movies:/movies
-      - /volume1/Media/tv:/tv
+      - ${MEDIA_ROOT:-/volume1/Media}/movies:/movies
+      - ${MEDIA_ROOT:-/volume1/Media}/tv:/tv
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
