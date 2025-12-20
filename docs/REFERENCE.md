@@ -58,21 +58,22 @@ docker ps
 # View logs
 docker logs -f <container_name>
 
-# Restart service
+# Restart single service
 docker compose -f docker-compose.arr-stack.yml restart <service_name>
+
+# Restart entire stack (safe - Pi-hole restarts immediately)
+docker compose -f docker-compose.arr-stack.yml up -d --force-recreate
 
 # Pull repo updates then redeploy
 git pull origin main
-docker compose -f docker-compose.arr-stack.yml down
-docker compose -f docker-compose.arr-stack.yml up -d
+docker compose -f docker-compose.arr-stack.yml up -d --force-recreate
 
 # Update container images
 docker compose -f docker-compose.arr-stack.yml pull
 docker compose -f docker-compose.arr-stack.yml up -d
-
-# Stop everything
-docker compose -f docker-compose.arr-stack.yml down
 ```
+
+> ⚠️ **Never use `docker compose down`** - this stops Pi-hole which kills DNS for your entire network if your router uses Pi-hole. Use `up -d --force-recreate` instead to restart the stack safely.
 
 ## Networks
 

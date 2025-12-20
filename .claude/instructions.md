@@ -113,6 +113,45 @@ All routes point to `<NAS_IP>:8080` (Traefik). Traefik routes by Host header. Se
 
 ## Pi-hole DNS (v6+)
 
+### ⚠️ CRITICAL: Pi-hole DNS Dependency
+
+**If your router uses Pi-hole as DNS, stopping Pi-hole = total network DNS failure.**
+
+This affects:
+- All devices on the network (no internet)
+- SSH connections using hostnames (use IP instead)
+- Claude Code sessions (can't reach API)
+
+**NEVER run `docker compose down` on arr-stack** - it stops Pi-hole and you lose DNS before you can run `up -d`. The `down` command also REMOVES containers, so UGOS Docker UI can't restart them.
+
+```bash
+# WRONG - stops Pi-hole, kills DNS, removes containers, you're stuck
+docker compose -f docker-compose.arr-stack.yml down
+docker compose -f docker-compose.arr-stack.yml up -d  # Can't run this - no DNS!
+
+# RIGHT - single atomic command, Pi-hole restarts immediately
+docker compose -f docker-compose.arr-stack.yml up -d --force-recreate
+```
+
+### Emergency Recovery (Pi-hole Down)
+
+If Pi-hole is down and you've lost DNS:
+
+1. **Connect to mobile hotspot** (different network, uses mobile DNS)
+2. **SSH to NAS using IP address** (not hostname):
+   ```bash
+   ssh <user>@<NAS_IP>  # e.g., ssh mooseadmin@192.168.0.136
+   ```
+3. **Start the stack**:
+   ```bash
+   cd /volume1/docker/arr-stack && docker compose -f docker-compose.arr-stack.yml up -d
+   ```
+4. **Wait 30 seconds**, reconnect to home WiFi - DNS restored
+
+**Know your NAS IP!** Check `config.local.md` or your router's DHCP leases. Write it down somewhere accessible offline.
+
+### Pi-hole Configuration
+
 Uses `pihole.toml`, NOT `custom.list`.
 
 ```bash

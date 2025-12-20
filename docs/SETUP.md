@@ -600,6 +600,8 @@ Skip this if you only want torrents. SABnzbd provides Usenet downloads as an alt
 
 **Network-wide ad-blocking:** Set your router's DHCP DNS to your host IP.
 
+> ⚠️ **DNS Dependency Warning:** If you configure your router to use Pi-hole as DNS and Pi-hole goes down, your entire network loses DNS (no internet). Keep your NAS IP address written down somewhere accessible offline. To recover: connect to mobile hotspot, SSH to NAS using IP (not hostname), run `docker compose up -d`.
+
 ⚠️ **Security:** Admin services are local-only by default, but still recommend enabling authentication on Sonarr, Radarr, Prowlarr, Bazarr, and qBittorrent.
 
 ---
