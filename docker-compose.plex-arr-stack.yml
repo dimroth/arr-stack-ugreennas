@@ -269,9 +269,10 @@ services:
     logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:32400/identity"]
-      interval: 3m
-      timeout: 10s
+      interval: 1m
+      timeout: 30s
       retries: 2
+      start_period: 30s
 
   #############################################
   # DNS & Ad-blocking (Pi-hole)              #
@@ -307,9 +308,10 @@ services:
     logging: *default-logging
     healthcheck:
       test: ["CMD", "dig", "@127.0.0.1", "-p", "53", "google.com", "+short"]
-      interval: 5m
+      interval: 30s
       timeout: 10s
       retries: 2
+      start_period: 30s
 
   #############################################
   # WireGuard VPN Server (wg-easy)           #
@@ -426,11 +428,17 @@ services:
     networks:
       traefik-proxy:
         ipv4_address: 192.168.100.10
+    labels:
+      - deunhealth.restart.on.unhealthy=true
     restart: unless-stopped
     logging: *default-logging
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8191/"]
-      interval: 3m
-      timeout: 10s
+      # Actually test Chrome by making a solve request (catches Chrome crashes)
+      test: ["CMD", "curl", "-sf", "-X", "POST", "-H", "Content-Type: application/json",
+             "-d", "{\"cmd\":\"request.get\",\"url\":\"http://localhost:8191/\",\"maxTimeout\":30000}",
+             "http://localhost:8191/v1"]
+      interval: 10m
+      timeout: 60s
       retries: 2
+      start_period: 2m
 

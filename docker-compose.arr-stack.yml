@@ -256,9 +256,10 @@ services:
     logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
-      interval: 3m
-      timeout: 10s
+      interval: 1m
+      timeout: 30s
       retries: 2
+      start_period: 30s
 
   #############################################
   # DNS & Ad-blocking (Pi-hole)              #
@@ -295,9 +296,10 @@ services:
     logging: *default-logging
     healthcheck:
       test: ["CMD", "dig", "@127.0.0.1", "-p", "53", "google.com", "+short"]
-      interval: 5m
+      interval: 30s
       timeout: 10s
       retries: 2
+      start_period: 30s
 
   #############################################
   # WireGuard VPN Server (wg-easy)           #
@@ -429,4 +431,5 @@ services:
       interval: 10m
       timeout: 60s
       retries: 2
+      start_period: 2m
 
