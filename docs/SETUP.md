@@ -561,7 +561,7 @@ Automatically downloads subtitles for your media.
 ### 4.10 Pi-hole (DNS)
 
 **Why Pi-hole in this stack?**
-- **DNS for VPN-routed services** — Prowlarr, Sonarr, Radarr etc. use Gluetun's network and need Pi-hole to resolve hostnames like `flaresolverr.lan`
+- **DNS for VPN-routed services** — Prowlarr, Sonarr, Radarr etc. use Gluetun's network and need Pi-hole to resolve local hostnames
 - **Optional .lan domains** — access services via `http://sonarr.lan` instead of `http://192.168.0.10:8989`
 - **Optional network-wide DNS** — set your router to use Pi-hole for all devices (ad-blocking bonus)
 
