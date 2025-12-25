@@ -115,7 +115,7 @@ Folders created via SSH don't appear in UGOS Files app. Create top-level folders
 1. Open UGOS web interface → **Files** app
 2. Create shared folders: **Media**, **docker**
 3. Inside **Media**, create subfolders: **downloads**, **tv**, **movies**
-4. Enable SSH: **Control Panel** → **Terminal** → toggle SSH on (set timeout or disable it)
+4. Enable SSH: **Control Panel** → **Terminal** → toggle SSH on
 5. SSH into your NAS and install git:
 
 ```bash
