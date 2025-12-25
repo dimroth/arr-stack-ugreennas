@@ -42,10 +42,6 @@ Complete setup guide for the media automation stack. Works on any Docker host wi
 
 > **Why Usenet?** More reliable than public torrents (no fakes), faster downloads, SSL-encrypted (no VPN needed). See [SABnzbd setup](#55-sabnzbd-usenet-downloads-optional).
 
-### For remote access (optional)
-- **Domain Name** (~$8-10/year)
-- **Cloudflare Account** (free tier)
-
 ---
 
 ## Stack Overview
@@ -671,6 +667,10 @@ Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues
 ---
 
 ## External Access (Optional)
+
+**Requirements:**
+- Domain name (~$8-10/year)
+- Cloudflare account (free tier)
 
 ### Cloudflare Tunnel Setup
 
