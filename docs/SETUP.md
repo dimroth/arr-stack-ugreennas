@@ -189,8 +189,6 @@ sudo chmod 600 /srv/docker/arr-stack/traefik/acme.json
 
 </details>
 
-> **Note:** From this point forward, all commands run **on your NAS via SSH**. If you closed your terminal, reconnect with `ssh your-username@nas-ip` and `cd` to your deployment directory. **UGOS users:** SSH times out after 2 hours—re-enable in Control Panel → Terminal if needed.
-
 ### Expected Structure
 
 ```
@@ -215,6 +213,8 @@ sudo chmod 600 /srv/docker/arr-stack/traefik/acme.json
 ---
 
 ## Step 2: Configure Settings
+
+> **Note:** From this point forward, all commands run **on your NAS via SSH**. If you closed your terminal, reconnect with `ssh your-username@nas-ip` and `cd` to your deployment directory. **UGOS users:** SSH times out after 2 hours—re-enable in Control Panel → Terminal if needed.
 
 ### 2.1 Create .env For Your Config
 
