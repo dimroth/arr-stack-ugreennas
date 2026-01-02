@@ -12,11 +12,11 @@ Complete setup guide for the media automation stack. Works on any Docker host wi
 - [Step 3: Start the Stack](#step-3-start-the-stack)
 - [Step 4: Configure Each App](#step-4-configure-each-app)
 - [Step 5: Test](#step-5-test)
-- [✅ Home Basic Complete](#-home-basic-complete)
-- [Local DNS (.lan domains)](#local-dns-lan-domains---optional) ← Home Pro
-- [✅ Home Pro Complete](#-home-pro-complete)
-- [External Access (Optional)](#external-access-optional) ← Anywhere
-- [✅ Anywhere Complete](#-anywhere-complete)
+- [✅ Core Complete](#-core-complete)
+- [Local DNS (.lan domains)](#local-dns-lan-domains---optional) ← + local DNS
+- [✅ + local DNS Complete](#--local-dns-complete)
+- [External Access (Optional)](#external-access-optional) ← + remote access
+- [✅ + remote access Complete](#--remote-access-complete)
 - [Backup](#backup)
 - [Optional Utilities](#optional-utilities)
 
@@ -60,9 +60,9 @@ Before diving in, decide how you'll access your media stack:
 
 | Setup | How you access | What to configure | Good for |
 |-------|----------------|-------------------|----------|
-| **Home Basic** | `192.168.1.50:8096` | Just `.env` + VPN credentials | Testing, single user |
-| **Home Pro** | `jellyfin.lan` | Add Pi-hole for DNS | Home/family use |
-| **Anywhere** | `jellyfin.yourdomain.com` | Add Traefik + Cloudflare Tunnel | Remote access |
+| **Core** | `192.168.1.50:8096` | Just `.env` + VPN credentials | Testing, single user |
+| **+ local DNS** | `jellyfin.lan` | Add Pi-hole | Home/family use |
+| **+ remote access** | `jellyfin.yourdomain.com` | Add Traefik + Cloudflare Tunnel | Access from anywhere |
 
 **You can start simple and add features later.** The guide has checkpoints so you can stop at any level.
 
@@ -77,20 +77,20 @@ Before diving in, decide how you'll access your media stack:
 | **Prowlarr** | Indexer manager - finds download sources for Sonarr/Radarr | All |
 | **qBittorrent** | Torrent client - downloads files (through VPN) | All |
 | **Jellyseerr** | Request portal - users request shows/movies here | All (recommended) |
-| **Pi-hole** | DNS server - enables `.lan` domains, blocks ads | Home Pro + Anywhere |
-| **Traefik** | Reverse proxy - routes `yourdomain.com` to services, handles HTTPS | Anywhere only |
-| **Cloudflared** | Tunnel to Cloudflare - secure remote access without port forwarding | Anywhere only |
-| **WireGuard** | VPN server - access your stack when away from home | Anywhere only (needs DOMAIN) |
+| **Pi-hole** | DNS server - enables `.lan` domains, blocks ads | + local DNS |
+| **Traefik** | Reverse proxy - routes `yourdomain.com` to services, handles HTTPS | + remote access |
+| **Cloudflared** | Tunnel to Cloudflare - secure remote access without port forwarding | + remote access |
+| **WireGuard** | VPN server - access your stack when away from home | + remote access (needs DOMAIN) |
 
 ### What You'll Edit
 
 **All setups:**
 - `.env` - VPN credentials, NAS IP, media paths, PUID/PGID
 
-**Home Pro + Anywhere (if using Pi-hole):**
+**+ local DNS and above (if using Pi-hole):**
 - `pihole/02-local-dns.conf` - Your `.lan` domain mappings
 
-**Anywhere only (if using Traefik):**
+**+ remote access only (if using Traefik):**
 - `traefik/traefik.yml` - Replace `yourdomain.com` (3 places)
 - `traefik/dynamic/vpn-services.yml` - Replace `yourdomain.com`
 
@@ -108,8 +108,8 @@ The stack is split into Docker Compose files so you can deploy only what you nee
 | File | Purpose | Which setup? |
 |------|---------|--------------|
 | `docker-compose.arr-stack.yml` | Core media stack (Jellyfin, *arr apps, downloads, VPN) | All |
-| `docker-compose.traefik.yml` | Reverse proxy for external access | Anywhere only |
-| `docker-compose.cloudflared.yml` | Secure tunnel to Cloudflare (no port forwarding) | Anywhere only |
+| `docker-compose.traefik.yml` | Reverse proxy for external access | + remote access |
+| `docker-compose.cloudflared.yml` | Secure tunnel to Cloudflare (no port forwarding) | + remote access |
 | `docker-compose.utilities.yml` | Monitoring, auto-recovery, disk usage | Optional extras |
 
 See [Quick Reference](REFERENCE.md) for .lan URLs and network details.
@@ -362,9 +362,9 @@ openssl rand -base64 24
 ```
 Add to `.env`: `PIHOLE_UI_PASS=your_password`
 
-**WireGuard Password Hash** (for remote VPN access — Anywhere setup only):
+**WireGuard Password Hash** (for remote VPN access — + remote access only):
 
-> **Note:** WireGuard uses `wg.${DOMAIN}` as its hostname. You need the Anywhere setup (with DOMAIN configured) for WireGuard to work.
+> **Note:** WireGuard uses `wg.${DOMAIN}` as its hostname. You need the + remote access setup (with DOMAIN configured) for WireGuard to work.
 
 Invent a password for the WireGuard admin UI and note it down, then generate its hash:
 ```bash
@@ -679,7 +679,7 @@ docker exec qbittorrent wget -qO- ifconfig.me   # Same - confirms qBit uses VPN
 
 ---
 
-## ✅ Home Basic Complete!
+## ✅ Core Complete!
 
 **Congratulations!** Your media stack is working. You can now:
 - Access services via `NAS_IP:port` (e.g., `192.168.1.50:8096` for Jellyfin)
@@ -688,8 +688,8 @@ docker exec qbittorrent wget -qO- ifconfig.me   # Same - confirms qBit uses VPN
 
 **What's next?**
 - **Stop here** if IP:port access is fine for you
-- **Continue to [Local DNS](#local-dns-lan-domains)** for `.lan` domains (Home Pro)
-- **Skip to [External Access](#external-access-optional)** for remote access (Anywhere)
+- **Continue to [Local DNS](#local-dns-lan-domains---optional)** for `.lan` domains
+- **Skip to [External Access](#external-access-optional)** for remote access
 
 ---
 
@@ -758,7 +758,7 @@ See [REFERENCE.md](REFERENCE.md#local-access-lan-domains) for the full list of `
 
 ---
 
-## ✅ Home Pro Complete!
+## ✅ + local DNS Complete!
 
 **Congratulations!** You now have:
 - Pretty `.lan` URLs for all services
@@ -777,15 +777,15 @@ Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues
 
 ## External Access (Optional)
 
-> **This section is for "Anywhere" setup only.** Skip if you only need local access (Home Basic or Home Pro).
+> **This section is for "+ remote access" setup only.** Skip if you only need local access (Core or + local DNS).
 
 ### What is Traefik?
 
 Traefik is a reverse proxy that enables **secure remote access** to your services from outside your home network.
 
 **Local access doesn't need Traefik.** On your home network, you can use:
-- Direct IP:port (e.g., `192.168.1.50:8096`) — Home Basic
-- `.lan` domains via Pi-hole (e.g., `jellyfin.lan`) — Home Pro
+- Direct IP:port (e.g., `192.168.1.50:8096`) — Core
+- `.lan` domains via Pi-hole (e.g., `jellyfin.lan`) — + local DNS
 
 **Remote access needs Traefik.** When accessing from outside your home:
 - Routes `jellyfin.yourdomain.com` to your Jellyfin server
@@ -901,7 +901,7 @@ From your phone on cellular data (not WiFi):
 
 ---
 
-## ✅ Anywhere Complete!
+## ✅ + remote access Complete!
 
 **Congratulations!** You now have:
 - Remote access from anywhere via `yourdomain.com`

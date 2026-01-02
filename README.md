@@ -39,12 +39,12 @@ Jellyseerr     →  Sonarr/Radarr  →  Prowlarr     →  qBittorrent  →  Jell
 
 **VPN protection:** Downloads go through your VPN (via Gluetun). Streaming doesn't need VPN—you're watching your own files.
 
-**Access options:**
+**Choose your setup:**
 | Setup | How you access | What you need |
 |-------|----------------|---------------|
-| **Home Basic** | `192.168.1.50:8096` | Just the core stack |
-| **Home Pro** | `jellyfin.lan` | Add Pi-hole for DNS |
-| **Anywhere** | `jellyfin.yourdomain.com` | Add Traefik + Cloudflare Tunnel |
+| **Core** | `192.168.1.50:8096` | Just the stack |
+| **+ local DNS** | `jellyfin.lan` | Add Pi-hole |
+| **+ remote access** | `jellyfin.yourdomain.com` | Add Traefik + Cloudflare Tunnel |
 
 ## Get Started
 

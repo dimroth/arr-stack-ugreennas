@@ -92,7 +92,7 @@ traefik-proxy network (172.20.0.0/24)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           HOME BASIC                                     │
+│                             CORE                                         │
 │                      Access via NAS_IP:port                              │
 │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐            │
 │  │ :8096     │  │ :8989     │  │ :7878     │  │ :5055     │  ...       │
@@ -103,7 +103,7 @@ traefik-proxy network (172.20.0.0/24)
                                     │ + Pi-hole
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           HOME PRO                                       │
+│                          + LOCAL DNS                                     │
 │                      Access via .lan domains                             │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐               │
 │  │ jellyfin.lan  │  │ sonarr.lan    │  │ radarr.lan    │  ...          │
@@ -115,7 +115,7 @@ traefik-proxy network (172.20.0.0/24)
                                     │ + Traefik + Cloudflare Tunnel
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           ANYWHERE                                       │
+│                        + REMOTE ACCESS                                   │
 │                   Access from outside your home                          │
 │  ┌─────────────────────┐  ┌─────────────────────┐                       │
 │  │ jellyfin.domain.com │  │ jellyseerr.domain.com│  ...                 │
@@ -130,15 +130,15 @@ traefik-proxy network (172.20.0.0/24)
 | File | Purpose | Required for |
 |------|---------|--------------|
 | `docker-compose.arr-stack.yml` | Core media stack + VPN | All setups |
-| `docker-compose.traefik.yml` | Reverse proxy for external access | Anywhere |
-| `docker-compose.cloudflared.yml` | Tunnel to Cloudflare | Anywhere |
+| `docker-compose.traefik.yml` | Reverse proxy for external access | + remote access |
+| `docker-compose.cloudflared.yml` | Tunnel to Cloudflare | + remote access |
 | `docker-compose.utilities.yml` | Monitoring, disk usage, auto-recovery | Optional |
 
 ## Why This Design?
 
 **Static IPs:** Prevents "container not found" errors after restarts. Services always know where to find each other.
 
-**Separate compose files:** Deploy only what you need. Home Basic users don't need Traefik or Cloudflared.
+**Separate compose files:** Deploy only what you need. Core users don't need Traefik or Cloudflared.
 
 **VPN for downloads only:** Protects privacy where it matters, doesn't slow down streaming.
 
