@@ -178,10 +178,6 @@ sudo apt-get update && sudo apt-get install -y git
 cd /volume1/docker
 sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /volume1/docker/arr-stack
-
-# Prepare Traefik certificate storage
-sudo touch /volume1/docker/arr-stack/traefik/acme.json
-sudo chmod 600 /volume1/docker/arr-stack/traefik/acme.json
 ```
 
 **Note:** Use `sudo` for Docker commands on Ugreen NAS. Service configs are stored in Docker named volumes (auto-created on first run).
@@ -206,10 +202,6 @@ sudo synopkg install Git
 cd /volume1/docker
 sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /volume1/docker/arr-stack
-
-# Prepare Traefik certificate storage
-sudo touch /volume1/docker/arr-stack/traefik/acme.json
-sudo chmod 600 /volume1/docker/arr-stack/traefik/acme.json
 ```
 
 </details>
@@ -229,15 +221,18 @@ sudo chown -R 1000:1000 /srv/media
 cd /srv/docker
 sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
 sudo chown -R 1000:1000 /srv/docker/arr-stack
-
-# Prepare Traefik certificate storage
-sudo touch /srv/docker/arr-stack/traefik/acme.json
-sudo chmod 600 /srv/docker/arr-stack/traefik/acme.json
 ```
 
 **Note:** Adjust paths in docker-compose files if using different locations. Service configs are stored in Docker named volumes (auto-created on first run).
 
 </details>
+
+**If using Traefik (+ local DNS or + remote access):**
+```bash
+# Prepare certificate storage
+sudo touch /path/to/arr-stack/traefik/acme.json
+sudo chmod 600 /path/to/arr-stack/traefik/acme.json
+```
 
 ### Expected Structure
 
