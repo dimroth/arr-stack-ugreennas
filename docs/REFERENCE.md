@@ -1,6 +1,6 @@
 # Quick Reference: URLs, Commands, Network
 
-> ⚠️ **If you lose internet connection:** Pi-hole provides DNS for your LAN. If it goes down (e.g., during `docker compose down`), you'll lose DNS resolution and internet access. To recover:
+> ⚠️ **If you lose internet connection (+ local DNS users):** If you configured Pi-hole as your router's DNS server, stopping it (e.g., `docker compose down`) kills DNS for your entire network. To recover:
 > 1. Connect to mobile hotspot (or manually set DNS to 8.8.8.8)
 > 2. SSH to NAS and run: `docker compose -f docker-compose.arr-stack.yml up -d pihole`
 > 3. Switch back to your normal network
@@ -37,7 +37,7 @@
 
 | Service | IP | Port | Notes |
 |---------|-----|------|-------|
-| Traefik | 172.20.0.2 | 80, 443 | Reverse proxy |
+| Traefik | 172.20.0.2 | 80 | Reverse proxy |
 | **Gluetun** | **172.20.0.3** | — | VPN gateway |
 | ↳ qBittorrent | (via Gluetun) | 8085 | Torrent downloads |
 | ↳ SABnzbd | (via Gluetun) | 8082 | Usenet downloads |
