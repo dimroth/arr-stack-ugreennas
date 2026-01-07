@@ -498,6 +498,12 @@ SABnzbd provides Usenet downloads as an alternative/complement to qBittorrent.
    - Config (⚙️) → Special → **host_whitelist** → add `sabnzbd.lan`
    - Save, then restart SABnzbd container
 
+   Or via SSH:
+   ```bash
+   docker exec sabnzbd sed -i 's/^host_whitelist = .*/&, sabnzbd.lan/' /config/sabnzbd.ini
+   docker restart sabnzbd
+   ```
+
 6. **Add Usenet indexer to Prowlarr** (later step):
    - NZBGeek ($12/year): https://nzbgeek.info
    - DrunkenSlug (free tier): https://drunkenslug.com
