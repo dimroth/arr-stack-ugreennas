@@ -10,6 +10,7 @@ When someone requests a movie or TV show, here's what happens:
 ┌─────────────┐     ┌──────────────┐     ┌───────────┐     ┌─────────────┐     ┌──────────┐
 │ Jellyseerr  │────▶│ Sonarr/Radarr│────▶│ Prowlarr  │────▶│ qBittorrent │────▶│ Jellyfin │
 │ (request)   │     │ (manage)     │     │ (indexers)│     │   SABnzbd   │     │ (watch)  │
+│             │     │              │     │           │     │ (download)  │     │          │
 └─────────────┘     └──────────────┘     └───────────┘     └─────────────┘     └──────────┘
       │                    │                   │                  │                  │
       │                    │                   │                  │                  │
