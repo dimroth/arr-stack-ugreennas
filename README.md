@@ -23,6 +23,7 @@ Works on Ugreen, Synology, QNAP, or any Docker host.
 <summary>Technical features</summary>
 
 - **Local `.lan` domains** — `http://sonarr.lan` instead of port numbers
+- **Intel Quick Sync** — GPU-accelerated transcoding on Intel NAS (Ugreen DXP4800+, etc.). Optional, falls back gracefully.
 - **Auto-recovery** — Services restart when VPN reconnects
 - **Production healthchecks** — Not just "is the process running?"
 - **One-command backup script** — Essential configs to ~13MB
