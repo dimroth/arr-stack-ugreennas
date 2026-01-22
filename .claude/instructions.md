@@ -1,5 +1,21 @@
 # Project Instructions for Claude Code
 
+## ⚠️ FIRST: NAS SSH Access
+
+**Before ANY SSH command, read `config.local.md` for credentials.**
+
+```bash
+# Pattern for ALL NAS commands:
+sshpass -p 'PASSWORD' ssh USER@HOST "COMMAND"
+
+# With sudo:
+sshpass -p 'PASSWORD' ssh USER@HOST "echo 'PASSWORD' | sudo -S COMMAND"
+```
+
+**NEVER guess usernames or try random SSH keys. The credentials are in `config.local.md`.**
+
+---
+
 ## What This Project Is
 
 A Docker Compose media automation stack **that runs on a NAS**, not on this local machine. Users request TV shows/movies via Jellyseerr → Sonarr/Radarr search for them → qBittorrent/SABnzbd download them (through VPN) → media appears in Jellyfin ready to watch.
