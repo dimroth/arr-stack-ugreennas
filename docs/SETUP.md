@@ -143,9 +143,9 @@ ssh your-username@nas-ip
 sudo apt-get update && sudo apt-get install -y git
 
 # Clone the repo
-cd /volume1/docker
+cd /volume2/docker
 sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
-sudo chown -R 1000:1000 /volume1/docker/arr-stack
+sudo chown -R 1000:1000 /volume2/docker/arr-stack
 ```
 
 **Note:** Use `sudo` for Docker commands on Ugreen NAS. Service configs are stored in Docker named volumes (auto-created on first run).
@@ -167,9 +167,9 @@ ssh your-username@nas-ip
 sudo synopkg install Git
 
 # Clone the repo
-cd /volume1/docker
+cd /volume2/docker
 sudo git clone https://github.com/Pharkie/arr-stack-ugreennas.git arr-stack  # or your fork
-sudo chown -R 1000:1000 /volume1/docker/arr-stack
+sudo chown -R 1000:1000 /volume2/docker/arr-stack
 ```
 
 </details>
@@ -203,6 +203,7 @@ sudo chown -R 1000:1000 /srv/docker/arr-stack
 │   ├── downloads/    # qBittorrent downloads
 │   ├── tv/           # TV shows (Sonarr → Jellyfin)
 │   └── movies/       # Movies (Radarr → Jellyfin)
+/volume2/
 └── docker/
     └── arr-stack/
         ├── traefik/              # + local DNS / + remote access only
@@ -221,7 +222,7 @@ sudo chown -R 1000:1000 /srv/docker/arr-stack
 
 The stack needs your media path, timezone, VPN credentials, and a few passwords. Everything goes in one `.env` file.
 
-> **Note:** From this point forward, all commands run **on your NAS via SSH**. If you closed your terminal, reconnect with `ssh your-username@nas-ip` and `cd /volume1/docker/arr-stack` (or your clone location). **UGOS users:** SSH may time out—re-enable in Control Panel → Terminal if needed.
+> **Note:** From this point forward, all commands run **on your NAS via SSH**. If you closed your terminal, reconnect with `ssh your-username@nas-ip` and `cd /volume2/docker/arr-stack` (or your clone location). **UGOS users:** SSH may time out—re-enable in Control Panel → Terminal if needed.
 
 ### 2.1 Copy the Main Configuration File
 
@@ -831,7 +832,7 @@ The container uses a static IP with a fake MAC address (`TRAEFIK_LAN_MAC` in `.e
 > **Important:** You MUST create `traefik.yml` before deploying. If Docker can't find the file, it creates a directory instead, and Traefik fails to start.
 
 ```bash
-cd /volume1/docker/arr-stack
+cd /volume2/docker/arr-stack
 
 # Create Traefik config from example
 cp traefik/traefik.yml.example traefik/traefik.yml
@@ -896,7 +897,7 @@ Cloudflare Tunnel lets you access services from outside your home without openin
 **1. Login to Cloudflare (run on NAS via SSH):**
 
 ```bash
-cd /volume1/docker/arr-stack
+cd /volume2/docker/arr-stack
 mkdir -p cloudflared && chmod 777 cloudflared
 docker run --rm -v ./cloudflared:/home/nonroot/.cloudflared cloudflare/cloudflared tunnel login
 ```

@@ -4,7 +4,7 @@
 # Cron: 0 3 * * * /usr/local/bin/arr-backup.sh
 
 BACKUP_DIR="/mnt/arr-backup"
-SOURCE_DIR="/volume1/docker/arr-stack"
+SOURCE_DIR="/volume2/docker/arr-stack"
 DATE=$(date +%Y%m%d)
 KEEP_DAYS=7
 

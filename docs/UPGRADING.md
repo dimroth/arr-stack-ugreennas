@@ -11,7 +11,7 @@ SSH into your NAS and pull the latest changes:
 
 ```bash
 ssh your-username@nas-ip
-cd /volume1/docker/arr-stack  # or your deployment path
+cd /volume2/docker/arr-stack  # or your deployment path
 
 git pull origin main
 docker compose -f docker-compose.arr-stack.yml up -d --force-recreate  # Updates AND restarts - no further steps needed
@@ -79,7 +79,7 @@ rm -f traefik/acme.json
 The old name was confusing - implied Traefik was required for Core setup. The network is used by all services.
 
 ```bash
-cd /volume1/docker/arr-stack && \
+cd /volume2/docker/arr-stack && \
 git pull origin main && \
 docker compose -f docker-compose.arr-stack.yml down && \
 docker compose -f docker-compose.utilities.yml down 2>/dev/null; \
@@ -105,7 +105,7 @@ echo "Migration complete"
 Run the full migration as a single chained command to minimize DNS downtime:
 
 ```bash
-cd /volume1/docker/arr-stack && \
+cd /volume2/docker/arr-stack && \
 git pull origin main && \
 docker compose -f docker-compose.arr-stack.yml down && \
 docker compose -f docker-compose.utilities.yml down 2>/dev/null; \

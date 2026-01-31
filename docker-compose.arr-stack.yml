@@ -73,6 +73,9 @@ services:
       - VPN_TYPE=${VPN_TYPE}
       - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
       - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      - WIREGUARD_ENDPOINT_IP=${WIREGUARD_ENDPOINT_IP}
+      - WIREGUARD_ENDPOINT_PORT=${WIREGUARD_ENDPOINT_PORT}
+      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
       - SERVER_COUNTRIES=${VPN_COUNTRIES}
       - TZ=${TZ}
       - DNS_ADDRESS=172.20.0.5
@@ -175,8 +178,8 @@ services:
         condition: service_healthy
         restart: true
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
+      - PUID=0
+      - PGID=0
       - TZ=${TZ}
     volumes:
       - sonarr-config:/config
@@ -235,8 +238,8 @@ services:
         condition: service_healthy
         restart: true
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
+      - PUID=0
+      - PGID=0
       - TZ=${TZ}
     volumes:
       - radarr-config:/config

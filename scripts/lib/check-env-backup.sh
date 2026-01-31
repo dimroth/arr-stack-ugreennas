@@ -36,7 +36,7 @@ check_env_backup() {
 
     # Get NAS .env via SSH (|| true prevents set -e from exiting on SSH failure)
     local nas_env
-    nas_env=$(ssh_to_nas "cat /volume1/docker/arr-stack/.env") || true
+    nas_env=$(ssh_to_nas "cat /volume2/docker/arr-stack/.env") || true
 
     # Skip if SSH failed
     if [[ -z "$nas_env" ]]; then
@@ -52,7 +52,7 @@ check_env_backup() {
 
     if [[ "$nas_env" != "$local_env" ]]; then
         echo "    WARNING: .env.nas.backup differs from NAS .env"
-        echo "             Run: scp $nas_user@$nas_host:/volume1/docker/arr-stack/.env .env.nas.backup"
+        echo "             Run: scp $nas_user@$nas_host:/volume2/docker/arr-stack/.env .env.nas.backup"
         return 0  # Warning only, don't block
     fi
 

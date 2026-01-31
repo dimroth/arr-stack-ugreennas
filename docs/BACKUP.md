@@ -55,7 +55,7 @@ Large volumes that regenerate automatically are excluded:
 
 ```bash
 # SSH into your NAS first, then:
-cd /volume1/docker/arr-stack
+cd /volume2/docker/arr-stack
 ./scripts/backup-volumes.sh --tar
 ```
 
@@ -175,7 +175,7 @@ A cron job runs daily at 6am, backing up to USB:
 sudo crontab -l
 
 # Default schedule (already configured):
-0 6 * * * /volume1/docker/arr-stack/scripts/backup-volumes.sh --tar /mnt/arr-backup >> /var/log/arr-backup.log 2>&1
+0 6 * * * /volume2/docker/arr-stack/scripts/backup-volumes.sh --tar /mnt/arr-backup >> /var/log/arr-backup.log 2>&1
 ```
 
 **Features:**

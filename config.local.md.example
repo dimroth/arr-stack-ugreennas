@@ -81,7 +81,7 @@ NAS LAN IP: `YOUR_NAS_LAN_IP` (or `your-nas.local`)
 
 | Path | Contents |
 |------|----------|
-| `/volume1/docker/arr-stack/` | Docker compose files and configs |
+| `/volume2/docker/arr-stack/` | Docker compose files and configs |
 | `/volume1/Media/downloads/` | qBittorrent downloads |
 | `/volume1/Media/tv/` | TV shows |
 | `/volume1/Media/movies/` | Movies |

@@ -30,7 +30,7 @@
 
 # Ensure critical services are running on ANY exit (normal, error, or interrupt)
 ensure_services_running() {
-  COMPOSE_FILE="/volume1/docker/arr-stack/docker-compose.arr-stack.yml"
+  COMPOSE_FILE="/volume2/docker/arr-stack/docker-compose.arr-stack.yml"
   [ -f "$COMPOSE_FILE" ] || return 0
 
   CRITICAL="gluetun pihole sonarr radarr prowlarr qbittorrent jellyfin sabnzbd"

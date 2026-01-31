@@ -86,6 +86,7 @@ This project uses **separate Docker Compose files** for each layer:
 │   ├── downloads/    # qBittorrent
 │   ├── tv/           # TV shows
 │   └── movies/       # Movies
+/volume2/
 └── docker/
     └── arr-stack/
         ├── traefik/       # User-edited (bind mount)
