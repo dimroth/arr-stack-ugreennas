@@ -22,7 +22,7 @@
 | Bazarr | `NAS_IP:6767` | `http://bazarr.lan` | — |
 | qBittorrent | `NAS_IP:8085` | `http://qbit.lan` | — |
 | SABnzbd | `NAS_IP:8082` | `http://sabnzbd.lan` | — |
-| Pi-hole | `NAS_IP:8081/admin` | `http://pihole.lan/admin` | — |
+| Pi-hole | `PIHOLE_LAN_IP/admin` | `http://pihole.lan/admin` | — |
 | Traefik | — | `http://traefik.lan` | — |
 | Uptime Kuma | `NAS_IP:3001` | `http://uptime.lan` | — |
 | duc | `NAS_IP:8838` | `http://duc.lan` | — |
@@ -44,7 +44,7 @@
 | ↳ Radarr | (via Gluetun) | 7878 | Movies |
 | ↳ Prowlarr | (via Gluetun) | 9696 | Indexer manager |
 | Jellyfin | 172.20.0.4 | 8096 | Media server |
-| Pi-hole | 172.20.0.5 | 8081 | DNS ad-blocking (`/admin`) |
+| Pi-hole | 172.20.0.5 | 8081 | DNS + DHCP (`/admin`), also on macvlan (`PIHOLE_LAN_IP`) |
 | Jellyseerr | 172.20.0.8 | 5055 | Request management |
 | Bazarr | 172.20.0.9 | 6767 | Subtitles |
 | FlareSolverr | 172.20.0.10 | 8191 | Cloudflare bypass |
@@ -124,7 +124,7 @@ docker compose -f docker-compose.arr-stack.yml up -d
 |---------|--------|---------|
 | arr-stack | 172.20.0.0/24 | Service communication |
 | vpn-net | 10.8.1.0/24 | Internal VPN routing (WireGuard peers) |
-| traefik-lan | (your LAN)/24 | macvlan for .lan domains (+ local DNS only) |
+| traefik-lan | (your LAN)/24 | macvlan for .lan domains + Pi-hole DHCP (external, shared across compose files) |
 
 ## Startup Order
 

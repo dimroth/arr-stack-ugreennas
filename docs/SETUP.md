@@ -80,7 +80,7 @@ Here's what you'll need to get started.
 | **Prowlarr** | Indexer manager - finds download sources for Sonarr/Radarr | Core |
 | **qBittorrent** | Torrent client - downloads files (through VPN) | Core |
 | **Gluetun** | VPN container - routes download traffic through VPN so your ISP can't see what you download | Core |
-| **Pi-hole** | DNS server - blocks ads, provides Docker DNS | Core |
+| **Pi-hole** | DNS + DHCP server - blocks ads, provides Docker DNS, assigns IPs | Core |
 | **Traefik** | Reverse proxy - enables `.lan` domains | + local DNS |
 | **Cloudflared** | Tunnel to Cloudflare - secure remote access without port forwarding | + remote access |
 
@@ -360,6 +360,8 @@ docker network create \
   --gateway=172.20.0.1 \
   arr-stack
 ```
+
+> **+ local DNS users:** You'll also need to create the `traefik-lan` macvlan network later (see [+ local DNS step 2](#-local-dns-lan-domains--optional)). This network is shared between Traefik and Pi-hole (for DHCP).
 
 ### 3.2 Deploy
 
@@ -741,13 +743,40 @@ This gives Usenet a 30-minute head start before considering torrents.
 
 > **Note:** Repeat in both Sonarr and Radarr if you want consistent behavior.
 
-### 4.10 Pi-hole (DNS)
+### 4.10 Pi-hole (DNS + DHCP)
 
-1. **Access:** `http://NAS_IP:8081/admin`
+1. **Access:** `http://PIHOLE_LAN_IP/admin` (the macvlan IP from `.env`, e.g., `http://192.168.1.25/admin`)
 2. **Login:** Use password from `PIHOLE_UI_PASS` (password only, no username)
 3. **Upstream DNS:** Settings → DNS → pick upstream servers (1.1.1.1, 8.8.8.8, etc.)
 
-**Optional:** Set your router's DHCP DNS to your NAS IP for network-wide ad-blocking.
+**Option A (simple):** Set your router's DHCP DNS to your NAS IP for network-wide ad-blocking.
+
+**Option B (recommended): Use Pi-hole as DHCP server**
+
+Pi-hole can replace your router's DHCP server, giving it full control over DNS and IP assignments. This requires a macvlan LAN IP so Pi-hole can send DHCP broadcasts on your physical network.
+
+1. **Add macvlan settings to `.env`:**
+   ```bash
+   PIHOLE_LAN_IP=192.168.1.25       # Unused IP in your LAN range
+   PIHOLE_LAN_MAC=02:42:c0:a8:01:19 # Any locally-administered MAC
+   ```
+
+2. **Create the `traefik-lan` macvlan network** (if not already created for + local DNS):
+   ```bash
+   docker network create -d macvlan \
+     --subnet=$LAN_SUBNET --gateway=$LAN_GATEWAY \
+     -o parent=$LAN_INTERFACE traefik-lan
+   ```
+
+3. **Redeploy:** `docker compose -f docker-compose.arr-stack.yml up -d --force-recreate`
+
+4. **Enable DHCP in Pi-hole:** Settings → DHCP
+   - Enable DHCP server
+   - Set range (e.g., `192.168.1.100` to `192.168.1.200`)
+   - Set gateway to your router IP
+   - Add static leases for NAS, Traefik macvlan, and Pi-hole macvlan IPs
+
+5. **Disable DHCP on your router** (only after Pi-hole DHCP is confirmed working)
 
 ---
 
@@ -809,7 +838,19 @@ LAN_SUBNET=10.10.0.0/24       # Your LAN subnet
 LAN_GATEWAY=10.10.0.1         # Your router IP
 ```
 
-**Step 2: Reserve the IP in your router**
+**Step 2: Create the macvlan network**
+
+The `traefik-lan` macvlan network is shared between Traefik and Pi-hole (for DHCP). It must be created as an external Docker network before deploying:
+
+```bash
+docker network create -d macvlan \
+  --subnet=$LAN_SUBNET --gateway=$LAN_GATEWAY \
+  -o parent=$LAN_INTERFACE traefik-lan
+```
+
+> **Note:** Replace the `$` variables with your actual values from `.env`, or source the file first: `source .env`
+
+**Step 3: Reserve the IP in your router**
 
 The container uses a static IP with a fake MAC address (`TRAEFIK_LAN_MAC` in `.env`, default `02:42:0a:0a:00:0b`). Your router doesn't know about it, so add a DHCP reservation to prevent it assigning that IP to another device.
 
@@ -827,7 +868,7 @@ The container uses a static IP with a fake MAC address (`TRAEFIK_LAN_MAC` in `.e
 
 </details>
 
-**Step 3: Create Traefik config and deploy**
+**Step 4: Create Traefik config and deploy**
 
 > **Important:** You MUST create `traefik.yml` before deploying. If Docker can't find the file, it creates a directory instead, and Traefik fails to start.
 
@@ -841,7 +882,7 @@ cp traefik/traefik.yml.example traefik/traefik.yml
 docker compose -f docker-compose.traefik.yml up -d
 ```
 
-**Step 4: Configure DNS**
+**Step 5: Configure DNS**
 ```bash
 # Copy example and replace placeholder with your Traefik IP
 sed "s/TRAEFIK_LAN_IP/10.10.0.11/g" pihole/02-local-dns.conf.example > pihole/02-local-dns.conf
@@ -855,7 +896,7 @@ docker compose -f docker-compose.arr-stack.yml restart pihole
 
 > **⚠️ Important:** Stack `.lan` domains are managed in `02-local-dns.conf`. If you add your own domains (e.g., homeassistant.lan), use either the CLI or Pi-hole web UI — but never define the same domain in both places, as they can conflict and cause unpredictable DNS resolution.
 
-**Step 5: Set router DNS**
+**Step 6: Set router DNS**
 
 Configure your router's DHCP to advertise your NAS IP as DNS server. All devices will then use Pi-hole for DNS.
 

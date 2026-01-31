@@ -294,17 +294,15 @@ services:
       start_period: 30s
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # PI-HOLE - DNS server. Enables .lan domains and blocks ads network-wide.
-  # Access: pihole.lan/admin | NAS_IP:8081/admin
+  # PI-HOLE - DNS + DHCP server. Enables .lan domains, blocks ads, assigns IPs.
+  # Access: pihole.lan/admin | PIHOLE_LAN_IP/admin (macvlan IP)
   # For: Home Pro + Anywhere setups
   # ═══════════════════════════════════════════════════════════════════════════
   pihole:
     image: pihole/pihole:latest
     container_name: pihole
-    ports:
-      - "${NAS_IP}:53:53/tcp"  # Bind to NAS IP to avoid conflict with localhost dnsmasq
-      - "${NAS_IP}:53:53/udp"
-      - "8081:80"  # Web UI (local network access)
+    # No port mappings needed - Pi-hole is accessed directly on its macvlan LAN IP
+    # (Docker port mappings break when macvlan is attached due to NAT return routing)
     networks:
       arr-stack:
         ipv4_address: 172.20.0.5

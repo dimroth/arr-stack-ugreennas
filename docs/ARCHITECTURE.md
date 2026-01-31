@@ -88,7 +88,7 @@ arr-stack network (172.20.0.0/24)
 │ 172.20.0.8   │ Jellyseerr   │ Request portal                 │ Core             │
 │ 172.20.0.9   │ Bazarr       │ Subtitles                      │ Core             │
 │ 172.20.0.10  │ FlareSolverr │ Cloudflare bypass              │ Core (optional)  │
-│ 172.20.0.5   │ Pi-hole      │ DNS server                     │ Core             │
+│ 172.20.0.5   │ Pi-hole      │ DNS + DHCP server (+ macvlan)   │ Core             │
 │ 172.20.0.2   │ Traefik      │ Reverse proxy                  │ + local DNS      │
 │ 172.20.0.12  │ Cloudflared  │ Tunnel to Cloudflare           │ + remote access  │
 │ 172.20.0.13  │ Uptime Kuma  │ Monitoring                     │ Optional         │
@@ -141,6 +141,6 @@ arr-stack network (172.20.0.0/24)
 
 **VPN for downloads only:** Protects privacy where it matters, doesn't slow down streaming.
 
-**Pi-hole for DNS:** Provides internal Docker DNS and ad-blocking. Optionally enables `.lan` domains (+ local DNS).
+**Pi-hole for DNS + DHCP:** Provides internal Docker DNS, ad-blocking, and optionally DHCP. Enables `.lan` domains (+ local DNS). Pi-hole gets a macvlan LAN IP via the shared `traefik-lan` network for DHCP broadcast access.
 
 **Named volumes:** Data persists across container updates. Easy to backup with the included script.

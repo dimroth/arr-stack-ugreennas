@@ -34,7 +34,7 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 - **qBittorrent** - Torrent client (downloads via VPN)
 - **SABnzbd** - Usenet client (downloads via VPN)
 - **Gluetun** - VPN gateway container (protects all download traffic)
-- **Pi-hole** - DNS server (enables `.lan` domains, blocks ads)
+- **Pi-hole** - DNS + DHCP server (enables `.lan` domains, blocks ads, assigns IPs)
 - **Traefik** - Reverse proxy (routes `sonarr.lan` → correct container)
 
 **Networking:** Services behind VPN share Gluetun's network (`network_mode: service:gluetun`). They reach each other via `localhost`. Services outside the VPN reach them via `gluetun` hostname.
@@ -43,7 +43,7 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 
 ## ⚠️ CRITICAL: Read Before Any Docker Commands
 
-**Pi-hole provides DNS for the entire LAN. Stopping it = no internet.**
+**Pi-hole provides DNS and DHCP for the entire LAN. Stopping it = no internet and no new IP assignments.**
 
 ```bash
 # ❌ NEVER DO THIS - kills DNS, you lose connection before up -d runs
@@ -57,7 +57,9 @@ docker compose -f docker-compose.arr-stack.yml up -d --force-recreate
 ./scripts/restart-stack.sh
 ```
 
-**If you lose internet:** Mobile hotspot → SSH to NAS IP → `docker compose up -d pihole`
+**If you lose internet:** Mobile hotspot → SSH to NAS IP → `docker compose -f docker-compose.arr-stack.yml up -d pihole`
+
+**Pi-hole admin UI** is at `http://PIHOLE_LAN_IP/admin` (macvlan IP, e.g., `192.168.1.25`). NAS IP port mappings don't work with macvlan.
 
 ---
 
@@ -170,16 +172,19 @@ Dashboard path: **Zero Trust → Networks → Connectors → Cloudflare Tunnels 
 
 All routes point to `<NAS_IP>:8080` (Traefik). Traefik routes by Host header. See `config.local.md` for actual IPs and tunnel name.
 
-## Pi-hole DNS (v6+)
+## Pi-hole DNS + DHCP (v6+)
 
-### ⚠️ CRITICAL: Pi-hole DNS Dependency
+### ⚠️ CRITICAL: Pi-hole DNS/DHCP Dependency
 
-**If your router uses Pi-hole as DNS, stopping Pi-hole = total network DNS failure.**
+**Pi-hole serves both DNS and DHCP. Stopping it = total network DNS failure + no new DHCP leases.**
 
 This affects:
 - All devices on the network (no internet)
+- New device connections (no IP assignment via DHCP)
 - SSH connections using hostnames (use IP instead)
 - Claude Code sessions (can't reach API)
+
+Pi-hole has a macvlan LAN IP (`PIHOLE_LAN_IP` in `.env`) for serving DHCP broadcasts on the physical network. DHCP is configured via the Pi-hole web UI (Settings → DHCP).
 
 **NEVER run `docker compose down` on arr-stack** - it stops Pi-hole and you lose DNS before you can run `up -d`. The `down` command also REMOVES containers, so UGOS Docker UI can't restart them.
 
@@ -236,7 +241,7 @@ docker exec pihole pihole reloaddns
 ## Architecture
 
 - **3 compose files**: traefik (infra), arr-stack (apps), cloudflared (tunnel)
-- **Network**: arr-stack (172.20.0.0/24), static IPs for all services
+- **Network**: arr-stack (172.20.0.0/24) static IPs, traefik-lan (macvlan, shared by Traefik + Pi-hole)
 - **External access**: Cloudflare Tunnel (bypasses CGNAT)
 
 ## Adding Services
@@ -250,7 +255,7 @@ docker exec pihole pihole reloaddns
 
 | Service | Note |
 |---------|------|
-| Pi-hole | v6 API uses password not separate token |
+| Pi-hole | v6 API uses password not separate token. Serves DHCP via macvlan LAN IP (`PIHOLE_LAN_IP`). DHCP config via web UI. |
 | Gluetun | VPN gateway. Services using it share IP 172.20.0.3. Uses Pi-hole DNS. `FIREWALL_OUTBOUND_SUBNETS` must include LAN for HA access |
 | Cloudflared | SSL terminated at Cloudflare, Traefik receives HTTP |
 | FlareSolverr | Cloudflare bypass for Prowlarr. Configure in Prowlarr: Settings → Indexers → add FlareSolverr with Host `flaresolverr.lan` |
