@@ -27,6 +27,7 @@
 | Uptime Kuma | `NAS_IP:3001` | `http://uptime.lan` | — |
 | duc | `NAS_IP:8838` | `http://duc.lan` | — |
 | Beszel | `NAS_IP:8090` | `http://beszel.lan` | — |
+| Tailscale | — | — | Via Tailscale app on remote device |
 
 **Legend:**
 - **Core** — Always works on your LAN
@@ -48,6 +49,7 @@
 | Jellyseerr | 172.20.0.8 | 5055 | Request management |
 | Bazarr | 172.20.0.9 | 6767 | Subtitles |
 | FlareSolverr | 172.20.0.10 | 8191 | Cloudflare bypass |
+| Tailscale | 172.20.0.16 | — | Mesh VPN subnet router (also on macvlan: `TAILSCALE_LAN_IP`) |
 
 **+ local DNS** (traefik.yml):
 
@@ -154,6 +156,7 @@ Services start in dependency order (handled automatically by `depends_on`):
 | Pi-hole | DNS/ad-blocking |
 | WireGuard | VPN server |
 | FlareSolverr | CAPTCHA bypass |
+| Tailscale | Mesh VPN subnet router |
 
 ### `docker-compose.plex-arr-stack.yml` (Core - Plex)
 

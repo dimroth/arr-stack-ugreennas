@@ -14,6 +14,7 @@ Everything you need to go from zero to streaming. Works on any NAS or Docker hos
 - [Step 5: Check It Works](#step-5-check-it-works)
 - [+ local DNS (.lan domains)](#-local-dns-lan-domains--optional)
 - [+ remote access](#-remote-access--optional)
+- [+ Tailscale (full remote LAN access)](#-tailscale-full-remote-lan-access--optional)
 - [Backup](#backup)
 - [Optional Utilities](#optional-utilities)
 
@@ -28,6 +29,7 @@ Decide how you'll access your media stack:
 | **Core** | `192.168.1.50:8096` | Just `.env` + VPN credentials | Testing, single user |
 | **+ local DNS** | `jellyfin.lan` | Configure Pi-hole + add Traefik | Home/family use |
 | **+ remote access** | `jellyfin.yourdomain.com` | Add Cloudflare Tunnel | Watch/request from anywhere |
+| **+ Tailscale** | `sonarr.lan` from anywhere | Add Tailscale container | Full admin access remotely |
 
 **You can start simple and add features later.** The guide has checkpoints so you can stop at any level.
 
@@ -83,6 +85,7 @@ Here's what you'll need to get started.
 | **Pi-hole** | DNS + DHCP server - blocks ads, provides Docker DNS, assigns IPs | Core |
 | **Traefik** | Reverse proxy - enables `.lan` domains | + local DNS |
 | **Cloudflared** | Tunnel to Cloudflare - secure remote access without port forwarding | + remote access |
+| **Tailscale** | Mesh VPN subnet router - full remote LAN access to all services | + Tailscale |
 
 ### Files You Need To Edit
 
@@ -1079,9 +1082,104 @@ From your phone on cellular data (not WiFi):
 
 **You're done!** The sections below (Backup, Utilities) are optional but recommended.
 
-> **Need full network access remotely?** Cloudflare Tunnel only exposes HTTP services (Jellyfin, Jellyseerr). If you need to access admin UIs (Sonarr, Radarr, etc.) or `.lan` domains from outside your home, look into [Tailscale](https://tailscale.com/) — it's free for personal use and works even behind CGNAT. Setup is not covered here.
+> **Need full network access remotely?** Cloudflare Tunnel only exposes HTTP services (Jellyfin, Jellyseerr). Continue to [+ Tailscale](#-tailscale-full-remote-lan-access--optional) for full network-level access to admin UIs (Sonarr, Radarr, etc.) and `.lan` domains from outside your home.
 
 Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues) or [chat on Reddit](https://www.reddit.com/user/Jeff46K4/).
+
+---
+
+## + Tailscale (full remote LAN access) — Optional
+
+Access **all** services and `.lan` domains from outside your home — not just Jellyfin and Jellyseerr. Tailscale creates a mesh VPN that gives your remote devices direct network-level access to your LAN.
+
+**Cloudflare Tunnel vs Tailscale:**
+
+| | Cloudflare Tunnel | Tailscale |
+|---|---|---|
+| **Access type** | HTTP only (web apps) | Full network (any protocol) |
+| **What you can reach** | Jellyfin, Jellyseerr | Everything: Sonarr, Radarr, Pi-hole, `.lan` domains, etc. |
+| **Who can access** | Anyone with the URL | Only your Tailscale-authenticated devices |
+| **Setup** | Domain + Cloudflare account | Tailscale account (free) |
+
+Both can coexist — Cloudflare Tunnel for sharing Jellyfin/Jellyseerr with others, Tailscale for your own admin access.
+
+### Prerequisites
+
+- A [Tailscale account](https://login.tailscale.com) (free for personal use)
+- Tailscale installed on your remote device(s) (phone, laptop, etc.)
+- **+ local DNS** setup completed (Tailscale routes traffic to the macvlan network where Traefik and Pi-hole live)
+
+### Step 1: Add Tailscale settings to .env
+
+```bash
+# Add to your .env on the NAS:
+
+# Leave blank — you'll authenticate via container logs (see Step 3)
+TS_AUTHKEY=
+
+# Pick an unused IP in your LAN range for Tailscale's macvlan address
+TAILSCALE_LAN_IP=192.168.1.13
+```
+
+### Step 2: Deploy the Tailscale container
+
+```bash
+docker compose -f docker-compose.arr-stack.yml up -d tailscale
+```
+
+### Step 3: Authenticate
+
+The container starts and waits for you to link it to your Tailscale account:
+
+```bash
+docker logs tailscale
+# Look for: "To authenticate, visit: https://login.tailscale.com/a/..."
+```
+
+Open that URL in your browser, sign in to Tailscale, and authorize the device.
+
+> **Note:** Authentication is only needed on first launch. The node identity persists in the `tailscale-state` volume (`TS_AUTH_ONCE=true`), so restarts don't require re-authentication.
+
+### Step 4: Approve subnet routes in Tailscale admin console
+
+The container advertises your LAN subnet, but Tailscale requires you to explicitly approve it:
+
+1. Open [Tailscale Admin Console → Machines](https://login.tailscale.com/admin/machines)
+2. Find `nas-tailscale` → click **...** → **Edit route settings**
+3. Enable the subnet route (e.g., `192.168.1.0/24`)
+4. Enable **Use as exit node** (optional — lets you route all traffic through your home network)
+
+### Step 5: Configure DNS for .lan domains
+
+Without this, your remote device won't know how to resolve `.lan` domains.
+
+1. Open [Tailscale Admin Console → DNS](https://login.tailscale.com/admin/dns)
+2. Scroll to **Nameservers** → **Add nameserver** → **Custom**
+3. Enter your Pi-hole's LAN IP (e.g., `192.168.1.25`)
+4. Toggle **Restrict to search domain** → enter `lan`
+
+This tells Tailscale clients to resolve `.lan` domains via Pi-hole while using their normal DNS for everything else.
+
+### Step 6: Verify
+
+From a remote device (phone on cellular, or laptop outside your home) with Tailscale connected:
+
+```bash
+# Check Tailscale is connected
+tailscale status
+
+# Reach services on the macvlan network
+ping 192.168.1.11          # Traefik
+ping 192.168.1.25          # Pi-hole
+
+# Resolve .lan domains
+nslookup jellyfin.lan
+
+# Access admin UIs
+curl http://sonarr.lan
+```
+
+> **Headless auth key (alternative to Step 3):** If you prefer not to use the log URL flow, generate an auth key at [Tailscale Admin → Settings → Keys](https://login.tailscale.com/admin/settings/keys) (Reusable, Pre-authorized) and set `TS_AUTHKEY=tskey-auth-...` in `.env` before deploying.
 
 ---
 

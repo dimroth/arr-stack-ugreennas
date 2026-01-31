@@ -52,6 +52,9 @@ Internet ◄──Cloudflare Tunnel─│  Jellyfin    Jellyseerr               
                               │                                         │
 LAN only ◄────────────────────│  Pi-hole     Sonarr      Radarr   ...  │
   (local)                     │  (DNS)       (manage)    (manage)       │
+                              │                                         │
+Tailscale ◄───mesh VPN────────│  Tailscale   (subnet router)           │
+  (remote)                    │  Routes LAN subnet to remote devices   │
                               └─────────────────────────────────────────┘
 ```
 
@@ -93,6 +96,7 @@ arr-stack network (172.20.0.0/24)
 │ 172.20.0.12  │ Cloudflared  │ Tunnel to Cloudflare           │ + remote access  │
 │ 172.20.0.13  │ Uptime Kuma  │ Monitoring                     │ Optional         │
 │ 172.20.0.14  │ duc          │ Disk usage                     │ Optional         │
+│ 172.20.0.16  │ Tailscale    │ Mesh VPN subnet router (+macvlan)│ + Tailscale     │
 ───────────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -131,6 +135,18 @@ arr-stack network (172.20.0.0/24)
 │                                                                          │
 │  Phone → Cloudflare → Tunnel → Traefik → Service                        │
 └─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ + Tailscale
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      + TAILSCALE (full LAN)                              │
+│                 All services from outside your home                      │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐               │
+│  │ sonarr.lan    │  │ radarr.lan    │  │ pihole.lan    │  ...          │
+│  └───────────────┘  └───────────────┘  └───────────────┘               │
+│                                                                          │
+│  Phone → Tailscale mesh → Subnet router → Traefik/Service               │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Design Decisions
@@ -142,5 +158,7 @@ arr-stack network (172.20.0.0/24)
 **VPN for downloads only:** Protects privacy where it matters, doesn't slow down streaming.
 
 **Pi-hole for DNS + DHCP:** Provides internal Docker DNS, ad-blocking, and optionally DHCP. Enables `.lan` domains (+ local DNS). Pi-hole gets a macvlan LAN IP via the shared `traefik-lan` network for DHCP broadcast access.
+
+**Tailscale on two networks:** The Tailscale container joins both `arr-stack` (172.20.0.0/24) and `traefik-lan` (macvlan). It needs the macvlan network because `.lan` domains resolve to Traefik's macvlan IP — without it, subnet routing would fail for the addresses that matter most.
 
 **Named volumes:** Data persists across container updates. Easy to backup with the included script.
