@@ -35,6 +35,7 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 - **SABnzbd** - Usenet client (downloads via VPN)
 - **Gluetun** - VPN gateway container (protects all download traffic)
 - **Pi-hole** - DNS + DHCP server (enables `.lan` domains, blocks ads, assigns IPs)
+- **Tailscale** - Mesh VPN subnet router (full remote LAN access to `.lan` domains and admin UIs)
 - **Traefik** - Reverse proxy (routes `sonarr.lan` → correct container)
 
 **Networking:** Services behind VPN share Gluetun's network (`network_mode: service:gluetun`). They reach each other via `localhost`. Services outside the VPN reach them via `gluetun` hostname.
@@ -261,6 +262,7 @@ docker exec pihole pihole reloaddns
 | Gluetun | VPN gateway. Services using it share IP 172.20.0.3. Uses Pi-hole DNS. `FIREWALL_OUTBOUND_SUBNETS` must include LAN for HA access |
 | Cloudflared | SSL terminated at Cloudflare, Traefik receives HTTP |
 | FlareSolverr | Cloudflare bypass for Prowlarr. Configure in Prowlarr: Settings → Indexers → add FlareSolverr with Host `flaresolverr.lan` |
+| Tailscale | Mesh VPN subnet router (172.20.0.16 / 10.10.0.13). Advertises `10.10.0.0/24` for full remote LAN access. Auth: set `TS_AUTHKEY` in `.env` OR leave blank and check `docker logs tailscale` for login URL. `TS_AUTH_ONCE=true` so auth only needed on first launch. After deploy: approve routes + exit node in Tailscale admin console, add Pi-hole (`10.10.0.12`) as DNS for `lan` search domain. |
 
 ## Container Updates
 

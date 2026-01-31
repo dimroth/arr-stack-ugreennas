@@ -119,6 +119,7 @@ VOLUME_SUFFIXES=(
   bazarr-config           # Subtitle provider credentials
   uptime-kuma-data        # Monitor configurations
   pihole-etc-dnsmasq      # Custom DNS settings (small)
+  tailscale-state         # Tailscale node identity and keys
 )
 
 # Request manager - detect which variant is in use (Jellyfin or Plex)
