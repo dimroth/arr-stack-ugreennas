@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-01-31
+
+### Added
+- **Tailscale container**: Mesh VPN subnet router for full remote LAN access. Gives remote devices network-level access to all `.lan` domains and admin UIs (Sonarr, Radarr, Pi-hole, etc.). Free for personal use, works behind CGNAT. Auth key optional — can authenticate via login URL in container logs.
+
+### Documentation
+- **SETUP.md**: Full Tailscale setup guide (deploy, authenticate, approve routes, configure DNS, verify) with Cloudflare Tunnel comparison table
+- **ARCHITECTURE.md**: Added Tailscale to network diagram, access levels, and design decisions
+- **REFERENCE.md**: Added Tailscale to service access, network, and compose file tables
+
+---
+
 ## [1.5.5] - 2026-01-23
 
 ### Changed
