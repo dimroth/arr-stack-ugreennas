@@ -64,7 +64,7 @@ docker compose -f docker-compose.arr-stack.yml up -d --force-recreate
 ## Documentation Strategy
 
 - **Public docs** (tracked): Generic instructions with placeholders (`yourdomain.com`, `YOUR_NAS_IP`)
-- **Private config** (`.claude/config.local.md`, gitignored): Actual hostnames, IPs, usernames
+- **Private config** (`config.local.md`, gitignored): Actual hostnames, IPs, usernames
 - **Credentials** (`.env`, gitignored): Passwords and tokens
 
 **Always read `config.local.md`** for actual deployment values (domain, IPs, NAS hostname).
@@ -159,8 +159,8 @@ Routes defined in `traefik/dynamic/vpn-services.yml`, NOT Docker labels.
 Docker labels are minimal (`traefik.enable=true`, `traefik.docker.network=arr-stack`). To add routes, edit `vpn-services.yml`.
 
 **Remote vs Local-only services:**
-- **Remote** (via Cloudflare Tunnel): Jellyfin, Jellyseerr, WireGuard, Traefik dashboard
-- **Local-only** (NAS_IP:PORT or via WireGuard): Sonarr, Radarr, Prowlarr, qBittorrent, Bazarr, Pi-hole, Uptime Kuma, duc
+- **Remote** (via Cloudflare Tunnel): Jellyfin, Jellyseerr, Traefik dashboard
+- **Local-only** (NAS_IP:PORT or via VPN): Sonarr, Radarr, Prowlarr, qBittorrent, Bazarr, Pi-hole, Uptime Kuma, duc
 
 Why local-only? These services default to "no login from local network". Cloudflare Tunnel traffic appears local, bypassing auth. Use Jellyseerr for remote media requests.
 
@@ -300,7 +300,7 @@ ssh <user>@<nas-host> "cat /mnt/arr-backup/arr-stack-backup-*.tar.gz" > backups/
 
 ### What's Backed Up
 
-**Included** (~13MB compressed): gluetun, qbittorrent, prowlarr, bazarr, wireguard, uptime-kuma, pihole-dnsmasq, jellyseerr, sabnzbd configs.
+**Included** (~13MB compressed): gluetun, qbittorrent, prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, jellyseerr, sabnzbd configs.
 
 **Excluded** (regeneratable): jellyfin-config (407MB), sonarr (43MB), radarr (110MB), pihole blocklists (138MB).
 

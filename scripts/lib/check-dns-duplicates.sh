@@ -8,7 +8,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 check_dns_duplicates() {
     # Skip if NAS config not available
     if ! has_nas_config; then
-        echo "    SKIP: No NAS host in .claude/config.local.md"
+        echo "    SKIP: No NAS host in config.local.md"
         return 0
     fi
 

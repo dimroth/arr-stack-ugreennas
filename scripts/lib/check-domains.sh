@@ -10,7 +10,7 @@ check_domains() {
 
     # Skip if NAS config not available
     if ! has_nas_config; then
-        echo "    SKIP: No NAS config in .claude/config.local.md"
+        echo "    SKIP: No NAS config in config.local.md"
         return 0
     fi
 

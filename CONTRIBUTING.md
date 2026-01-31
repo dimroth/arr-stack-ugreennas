@@ -106,7 +106,7 @@ This project separates public documentation from private configuration:
 | **Public docs** | `docs/*.md`, `README.md` | Yes | Generic instructions with placeholders |
 | **Config templates** | `*.example` files | Yes | Templates with `yourdomain.com` placeholders |
 | **Your configs** | `traefik/*.yml`, `.env` | No | Your actual domain, customizations |
-| **Private config** | `.claude/config.local.md` | No | Actual hostnames, IPs, usernames |
+| **Private config** | `config.local.md` | No | Actual hostnames, IPs, usernames |
 | **Credentials** | `.env` | No | Passwords, API tokens, private keys |
 
 ### Config File Pattern
@@ -124,7 +124,7 @@ The actual `.yml` files are gitignored, so:
 - `git pull` updates only `.example` files (won't overwrite your config)
 - To get new features, manually merge changes from `.example` to your `.yml`
 
-**Setup**: Copy `.claude/config.local.md.example` to `.claude/config.local.md` and fill in your values.
+**Setup**: Copy `.claude/config.local.md.example` to `config.local.md` and fill in your values.
 
 ---
 
@@ -231,7 +231,7 @@ scripts/
 ```
 
 The `common.sh` library provides shared functions used by all checks:
-- **NAS config**: Reads hostname/user from `.claude/config.local.md`
+- **NAS config**: Reads hostname/user from `config.local.md`
 - **Domain config**: Reads domain from `.env` or `.env.nas.backup`
 - **SSH helpers**: Standardized SSH commands with timeouts
 - **File scanning**: Functions to get tracked/staged files

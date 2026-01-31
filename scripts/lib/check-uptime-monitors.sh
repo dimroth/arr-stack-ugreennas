@@ -26,7 +26,7 @@ check_uptime_monitors() {
 
     # Skip if NAS config not available
     if ! has_nas_config; then
-        echo "    SKIP: No NAS host in .claude/config.local.md"
+        echo "    SKIP: No NAS host in config.local.md"
         return 0
     fi
 

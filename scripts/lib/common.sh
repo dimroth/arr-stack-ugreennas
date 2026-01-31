@@ -52,7 +52,7 @@ is_binary_file() {
 }
 
 # ============================================
-# NAS Configuration (from .claude/config.local.md)
+# NAS Configuration (from config.local.md)
 # ============================================
 
 _NAS_CONFIG_LOADED=false
@@ -60,7 +60,7 @@ _NAS_HOST=""
 _NAS_USER=""
 _NAS_HOSTNAME=""  # Just the hostname part without .local
 
-# Load NAS config from .claude/config.local.md
+# Load NAS config from config.local.md
 # Call this once before using get_nas_* functions
 load_nas_config() {
     if $_NAS_CONFIG_LOADED; then
@@ -69,7 +69,7 @@ load_nas_config() {
 
     local repo_root config_local
     repo_root=$(get_repo_root)
-    config_local="$repo_root/.claude/config.local.md"
+    config_local="$repo_root/config.local.md"
 
     if [[ -f "$config_local" ]]; then
         # Extract hostname.local format
