@@ -60,13 +60,8 @@ services:
 networks:
   arr-stack:
     external: true
-  # macvlan network gives Traefik its own IP on your physical LAN
-  # This allows Traefik to own port 80/443 (which NAS can't give up)
+  # macvlan network gives services their own IPs on your physical LAN
+  # Created externally so it can be shared across compose files (Traefik + Pi-hole DHCP)
+  # Create with: docker network create -d macvlan --subnet=$LAN_SUBNET --gateway=$LAN_GATEWAY -o parent=$LAN_INTERFACE traefik-lan
   traefik-lan:
-    driver: macvlan
-    driver_opts:
-      parent: ${LAN_INTERFACE}  # Network interface - check with: ip link show
-    ipam:
-      config:
-        - subnet: ${LAN_SUBNET}
-          gateway: ${LAN_GATEWAY}
+    external: true
