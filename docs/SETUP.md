@@ -778,6 +778,8 @@ Pi-hole can replace your router's DHCP server, giving it full control over DNS a
 
 5. **Disable DHCP on your router** (only after Pi-hole DHCP is confirmed working)
 
+6. **⚠️ Disable IPv6 DNS on your router.** Most routers advertise themselves as an IPv6 DNS server via Router Advertisement (RA/RDNSS), independently of DHCP. Devices prefer IPv6 DNS, so they'll query the router first — which doesn't know about `.lan` domains. Disable this in your router's IPv6 settings (look for DHCPv6 or RDNSS). Do **not** enable "SLAAC + RA" in Pi-hole as a workaround — it reintroduces the same dual-DNS problem if the router ever re-enables RAs.
+
 ---
 
 ## Step 5: Check It Works

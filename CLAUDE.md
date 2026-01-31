@@ -186,6 +186,8 @@ This affects:
 
 Pi-hole has a macvlan LAN IP (`PIHOLE_LAN_IP` in `.env`) for serving DHCP broadcasts on the physical network. DHCP is configured via the Pi-hole web UI (Settings → DHCP).
 
+**IPv6 DNS gotcha:** Routers often advertise themselves as IPv6 DNS via Router Advertisement (RA/RDNSS), independently of DHCP. Devices prefer IPv6 DNS, so `.lan` domains fail because the router doesn't know about them. Fix: disable IPv6 DNS/DHCPv6/RDNSS on the router. Do NOT enable "SLAAC + RA" in Pi-hole — it reintroduces the dual-DNS conflict.
+
 **NEVER run `docker compose down` on arr-stack** - it stops Pi-hole and you lose DNS before you can run `up -d`. The `down` command also REMOVES containers, so UGOS Docker UI can't restart them.
 
 ```bash
