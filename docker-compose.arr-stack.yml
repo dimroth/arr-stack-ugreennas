@@ -356,7 +356,7 @@ services:
       - TS_AUTHKEY=${TS_AUTHKEY:-}
       - TS_AUTH_ONCE=true
       - TS_STATE_DIR=/var/lib/tailscale
-      - TS_ROUTES=10.10.0.0/24
+      - TS_ROUTES=${LAN_SUBNET}
       - TS_EXTRA_ARGS=--advertise-exit-node --accept-routes
       - TS_USERSPACE=false
     sysctls:
@@ -366,7 +366,7 @@ services:
       arr-stack:
         ipv4_address: 172.20.0.16
       traefik-lan:
-        ipv4_address: 10.10.0.13
+        ipv4_address: ${TAILSCALE_LAN_IP}
     restart: always
     logging: *default-logging
     healthcheck:

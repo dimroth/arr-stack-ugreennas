@@ -262,7 +262,7 @@ docker exec pihole pihole reloaddns
 | Gluetun | VPN gateway. Services using it share IP 172.20.0.3. Uses Pi-hole DNS. `FIREWALL_OUTBOUND_SUBNETS` must include LAN for HA access |
 | Cloudflared | SSL terminated at Cloudflare, Traefik receives HTTP |
 | FlareSolverr | Cloudflare bypass for Prowlarr. Configure in Prowlarr: Settings → Indexers → add FlareSolverr with Host `flaresolverr.lan` |
-| Tailscale | Mesh VPN subnet router (172.20.0.16 / 10.10.0.13). Advertises `10.10.0.0/24` for full remote LAN access. Auth: set `TS_AUTHKEY` in `.env` OR leave blank and check `docker logs tailscale` for login URL. `TS_AUTH_ONCE=true` so auth only needed on first launch. After deploy: approve routes + exit node in Tailscale admin console, add Pi-hole (`10.10.0.12`) as DNS for `lan` search domain. |
+| Tailscale | Mesh VPN subnet router (172.20.0.16 / `TAILSCALE_LAN_IP`). Advertises `LAN_SUBNET` for full remote LAN access. Auth: set `TS_AUTHKEY` in `.env` OR leave blank and check `docker logs tailscale` for login URL. `TS_AUTH_ONCE=true` so auth only needed on first launch. After deploy: approve routes + exit node in Tailscale admin console, add Pi-hole as DNS for `lan` search domain. |
 
 ## Container Updates
 
