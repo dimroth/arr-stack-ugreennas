@@ -97,6 +97,10 @@ arr-stack network (172.20.0.0/24)
 │ 172.20.0.13  │ Uptime Kuma  │ Monitoring                     │ Optional         │
 │ 172.20.0.14  │ duc          │ Disk usage                     │ Optional         │
 │ 172.20.0.16  │ Tailscale    │ Mesh VPN subnet router (+macvlan)│ + Tailscale     │
+│ 172.20.0.18  │ Immich       │ Photo/video server               │ + Immich        │
+│ 172.20.0.19  │ Immich ML    │ Facial recognition, smart search │ + Immich        │
+│ 172.20.0.20  │ Immich PG    │ PostgreSQL + pgvecto.rs           │ + Immich        │
+│ 172.20.0.21  │ Immich Redis │ Valkey job queue                  │ + Immich        │
 ───────────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -146,6 +150,20 @@ arr-stack network (172.20.0.0/24)
 │  └───────────────┘  └───────────────┘  └───────────────┘               │
 │                                                                          │
 │  Phone → Tailscale mesh → Subnet router → Traefik/Service               │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ + Immich
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        + IMMICH (photos)                                │
+│                 Self-hosted photo/video management                      │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐               │
+│  │ immich.lan    │  │immich.domain  │  │ Mobile app    │               │
+│  │ (local)       │  │ (remote)      │  │ (backup)      │               │
+│  └───────────────┘  └───────────────┘  └───────────────┘               │
+│                                                                          │
+│  4 containers: server, ML (OpenVINO), PostgreSQL, Redis                 │
+│  Built-in auth — safe to expose via Cloudflare Tunnel                   │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 

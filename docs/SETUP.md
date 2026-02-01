@@ -15,6 +15,7 @@ Everything you need to go from zero to streaming. Works on any NAS or Docker hos
 - [+ local DNS (.lan domains)](#-local-dns-lan-domains--optional)
 - [+ remote access](#-remote-access--optional)
 - [+ Tailscale (full remote LAN access)](#-tailscale-full-remote-lan-access--optional)
+- [+ Immich (photo management)](#-immich-photo-management--optional)
 - [Backup](#backup)
 - [Optional Utilities](#optional-utilities)
 
@@ -86,6 +87,7 @@ Here's what you'll need to get started.
 | **Traefik** | Reverse proxy - enables `.lan` domains | + local DNS |
 | **Cloudflared** | Tunnel to Cloudflare - secure remote access without port forwarding | + remote access |
 | **Tailscale** | Mesh VPN subnet router - full remote LAN access to all services | + Tailscale |
+| **Immich** | Self-hosted photo/video management with mobile backup, facial recognition, smart search | + Immich |
 
 ### Files You Need To Edit
 
@@ -1084,6 +1086,8 @@ From your phone on cellular data (not WiFi):
 
 > **Need full network access remotely?** Cloudflare Tunnel only exposes HTTP services (Jellyfin, Jellyseerr). Continue to [+ Tailscale](#-tailscale-full-remote-lan-access--optional) for full network-level access to admin UIs (Sonarr, Radarr, etc.) and `.lan` domains from outside your home.
 
+**Other docs:** [Upgrading](UPGRADING.md) · [Home Assistant Integration](HOME-ASSISTANT.md) · [Quick Reference](REFERENCE.md)
+
 Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues) or [chat on Reddit](https://www.reddit.com/user/Jeff46K4/).
 
 ---
@@ -1180,6 +1184,113 @@ curl http://sonarr.lan
 ```
 
 > **Headless auth key (alternative to Step 3):** If you prefer not to use the log URL flow, generate an auth key at [Tailscale Admin → Settings → Keys](https://login.tailscale.com/admin/settings/keys) (Reusable, Pre-authorized) and set `TS_AUTHKEY=tskey-auth-...` in `.env` before deploying.
+
+---
+
+## + Immich (photo management) — Optional
+
+Self-hosted photo and video management with mobile backup, facial recognition, and smart search. Replaces Google Photos or iCloud Photos.
+
+**What's included:**
+- **Immich Server** — Web UI and API (172.20.0.18:2283)
+- **Machine Learning** — Facial recognition, smart search, CLIP embeddings (172.20.0.19, OpenVINO for Intel GPUs)
+- **PostgreSQL** — Database with pgvecto.rs vector extensions for smart search (172.20.0.20)
+- **Redis (Valkey)** — Job queue and caching (172.20.0.21)
+
+### Step 1: Create upload directory
+
+Photos are stored on the HDD (not SSD) for capacity:
+
+```bash
+sudo mkdir -p /volume1/immich/upload
+```
+
+### Step 2: Add environment variables
+
+Add to `.env`:
+
+```bash
+# Immich version: 'release' for latest stable, or pin like 'v1.130.0'
+IMMICH_VERSION=release
+
+# Generate a secure database password
+IMMICH_DB_PASSWORD=$(openssl rand -base64 32)
+```
+
+### Step 3: Deploy
+
+```bash
+docker compose -f docker-compose.arr-stack.yml up -d immich-postgres immich-redis immich-server immich-machine-learning
+```
+
+### Step 4: Add DNS entry (+ local DNS users)
+
+```bash
+# Add to pihole/02-local-dns.conf
+address=/immich.lan/TRAEFIK_LAN_IP
+
+# Restart Pi-hole to pick up bind-mount changes
+docker restart pihole
+```
+
+> **Note:** `pihole reloaddns` is not sufficient for bind-mounted dnsmasq config files — a container restart is required.
+
+### Step 5: Create admin account
+
+1. Open `http://NAS_IP:2283` (or `http://immich.lan` with + local DNS)
+2. Click **Getting Started** → create your admin account
+3. The first registered user becomes admin
+
+### Step 6: Set up mobile backup
+
+1. Install the Immich app ([iOS](https://apps.apple.com/app/immich/id1613945652) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich))
+2. Set server URL to `http://NAS_IP:2283` (local) or `https://immich.yourdomain.com` (remote, see below)
+3. Sign in and enable automatic backup
+
+### Exposing Immich to the internet (+ remote access)
+
+Immich has built-in authentication (unlike Sonarr/Radarr), making it safe to expose publicly via Cloudflare Tunnel. This is required for mobile backup when away from home.
+
+**1. Add Traefik route** — edit `traefik/dynamic/vpn-services.yml`:
+
+```yaml
+http:
+  routers:
+    immich:
+      rule: "Host(`immich.yourdomain.com`)"
+      entryPoints:
+        - web
+      service: immich
+
+  services:
+    immich:
+      loadBalancer:
+        servers:
+          - url: "http://172.20.0.18:2283"
+```
+
+**2. Add Cloudflare Tunnel DNS route:**
+
+If your tunnel config already uses a wildcard (`*.yourdomain.com`), no `cloudflared` config changes are needed — the wildcard already routes to Traefik. Just add the DNS record:
+
+```bash
+docker run --rm -v ./cloudflared:/home/nonroot/.cloudflared \
+  cloudflare/cloudflared tunnel route dns nas-tunnel immich.yourdomain.com
+```
+
+Or add it in the Cloudflare dashboard: **Zero Trust → Networks → Tunnels → [your tunnel] → Public Hostname → Add** with subdomain `immich` pointing to `http://traefik:80`.
+
+**3. Test from outside your network:**
+
+Visit `https://immich.yourdomain.com` — you should see the Immich login page. Set this URL as the server address in the mobile app.
+
+### Hardware acceleration
+
+Immich uses the Intel GPU (`/dev/dri`) for:
+- **Server:** Hardware-accelerated video transcoding
+- **Machine Learning:** OpenVINO-accelerated facial recognition and CLIP embeddings (uses the `-openvino` image variant)
+
+Both containers share `RENDER_GROUP_ID` from `.env` (same as Jellyfin). If you don't have an Intel GPU, remove the `devices:` and `group_add:` lines from both `immich-server` and `immich-machine-learning` in the compose file.
 
 ---
 

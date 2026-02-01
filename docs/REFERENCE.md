@@ -27,6 +27,7 @@
 | Uptime Kuma | `NAS_IP:3001` | `http://uptime.lan` | — |
 | duc | `NAS_IP:8838` | `http://duc.lan` | — |
 | Beszel | `NAS_IP:8090` | `http://beszel.lan` | — |
+| Immich | `NAS_IP:2283` | `http://immich.lan` | `https://immich.DOMAIN` |
 | Tailscale | — | — | Via Tailscale app on remote device |
 
 **Legend:**
@@ -50,6 +51,10 @@
 | Bazarr | 172.20.0.9 | 6767 | Subtitles |
 | FlareSolverr | 172.20.0.10 | 8191 | Cloudflare bypass |
 | Tailscale | 172.20.0.16 | — | Mesh VPN subnet router (also on macvlan: `TAILSCALE_LAN_IP`) |
+| Immich | 172.20.0.18 | 2283 | Photo/video server (4 containers total) |
+| Immich ML | 172.20.0.19 | 3003 | Machine learning (facial recognition, smart search) |
+| Immich PG | 172.20.0.20 | 5432 | PostgreSQL with pgvecto.rs |
+| Immich Redis | 172.20.0.21 | 6379 | Valkey job queue |
 
 **+ local DNS** (traefik.yml):
 
@@ -157,6 +162,10 @@ Services start in dependency order (handled automatically by `depends_on`):
 | WireGuard | VPN server |
 | FlareSolverr | CAPTCHA bypass |
 | Tailscale | Mesh VPN subnet router |
+| Immich | Photo/video management |
+| Immich ML | Facial recognition, smart search |
+| Immich PostgreSQL | Database (pgvecto.rs) |
+| Immich Redis | Job queue (Valkey) |
 
 ### `docker-compose.plex-arr-stack.yml` (Core - Plex)
 
