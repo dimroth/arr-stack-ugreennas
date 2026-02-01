@@ -263,6 +263,9 @@ docker exec pihole pihole reloaddns
 | Cloudflared | SSL terminated at Cloudflare, Traefik receives HTTP |
 | FlareSolverr | Cloudflare bypass for Prowlarr. Configure in Prowlarr: Settings → Indexers → add FlareSolverr with Host `flaresolverr.lan` |
 | Tailscale | Mesh VPN subnet router (172.20.0.16 / `TAILSCALE_LAN_IP`). Advertises `LAN_SUBNET` for full remote LAN access. Auth: set `TS_AUTHKEY` in `.env` OR leave blank and check `docker logs tailscale` for login URL. `TS_AUTH_ONCE=true` so auth only needed on first launch. After deploy: approve routes + exit node in Tailscale admin console, add Pi-hole as DNS for `lan` search domain. |
+| TeslaMate | Tesla data logger (172.20.0.6:4000). Logs drives, charges, battery health. Sign in with Tesla account at `teslamate.lan`. Requires `TESLAMATE_ENCRYPTION_KEY` and `TESLAMATE_DB_PASS` in `.env`. |
+| TeslaMate Grafana | Pre-built dashboards for Tesla data (172.20.0.11:3000, mapped to NAS_IP:3100). Access at `grafana-tesla.lan`. Default login: admin/admin. |
+| Mosquitto | MQTT broker for TeslaMate (172.20.0.17:1883). Internal only, no auth (local network). |
 
 ## Container Updates
 

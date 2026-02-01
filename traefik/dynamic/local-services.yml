@@ -88,6 +88,17 @@ http:
       entryPoints: [web]
       service: beszel-lan
 
+    # === TeslaMate ===
+    teslamate-lan:
+      rule: "Host(`teslamate.lan`)"
+      entryPoints: [web]
+      service: teslamate-lan
+
+    grafana-tesla-lan:
+      rule: "Host(`grafana-tesla.lan`)"
+      entryPoints: [web]
+      service: grafana-tesla-lan
+
   middlewares:
     jellyseer-redirect:
       redirectRegex:
@@ -160,3 +171,14 @@ http:
       loadBalancer:
         servers:
           - url: "http://172.20.0.15:8090"
+
+    # === TeslaMate ===
+    teslamate-lan:
+      loadBalancer:
+        servers:
+          - url: "http://172.20.0.6:4000"
+
+    grafana-tesla-lan:
+      loadBalancer:
+        servers:
+          - url: "http://172.20.0.11:3000"

@@ -24,6 +24,10 @@ volumes:
   pihole-etc-pihole:
   pihole-etc-dnsmasq:
   tailscale-state:
+  teslamate-db:
+  teslamate-grafana-data:
+  teslamate-mosquitto-conf:
+  teslamate-mosquitto-data:
 
 #########################
 # Networks              #
@@ -437,6 +441,96 @@ services:
       interval: 3m
       timeout: 10s
       retries: 2
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TESLAMATE - Tesla vehicle data logger. Logs drives, charges, battery health.
+  # Access: teslamate.lan | NAS_IP:4000
+  # ═══════════════════════════════════════════════════════════════════════════
+  teslamate-db:
+    image: postgres:17
+    container_name: teslamate-db
+    environment:
+      - POSTGRES_USER=teslamate
+      - POSTGRES_PASSWORD=${TESLAMATE_DB_PASS}
+      - POSTGRES_DB=teslamate
+    volumes:
+      - teslamate-db:/var/lib/postgresql/data
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.7
+    restart: always
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teslamate"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    volumes:
+      - teslamate-mosquitto-conf:/mosquitto/config
+      - teslamate-mosquitto-data:/mosquitto/data
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.17
+    restart: always
+    logging: *default-logging
+
+  teslamate:
+    image: teslamate/teslamate:latest
+    container_name: teslamate
+    depends_on:
+      teslamate-db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    ports:
+      - "4000:4000"
+    environment:
+      - ENCRYPTION_KEY=${TESLAMATE_ENCRYPTION_KEY}
+      - DATABASE_USER=teslamate
+      - DATABASE_PASS=${TESLAMATE_DB_PASS}
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate-db
+      - MQTT_HOST=mosquitto
+      - TZ=${TZ}
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.6
+    restart: always
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  teslamate-grafana:
+    image: teslamate/grafana:latest
+    container_name: teslamate-grafana
+    ports:
+      - "3100:3000"
+    environment:
+      - DATABASE_USER=teslamate
+      - DATABASE_PASS=${TESLAMATE_DB_PASS}
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate-db
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.11
+    restart: always
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ═══════════════════════════════════════════════════════════════════════════
   # FLARESOLVERR - Cloudflare bypass. Helps Prowlarr access protected sites.
