@@ -504,7 +504,7 @@ services:
     restart: always
     logging: *default-logging
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/"]
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/4000"]
       interval: 1m
       timeout: 10s
       retries: 3
