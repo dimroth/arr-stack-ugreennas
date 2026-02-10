@@ -13,6 +13,9 @@ sonarr:
       # Anime profiles (uses series quality definitions above)
       - template: sonarr-v4-quality-profile-anime
       - template: sonarr-v4-custom-formats-anime
+      # French MULTi (original audio + French) profiles
+      - template: sonarr-v4-quality-profile-bluray-web-1080p-french-multi-vo
+      - template: sonarr-v4-custom-formats-bluray-web-1080p-french-multi-vo
 
 radarr:
   movies:
@@ -33,3 +36,6 @@ radarr:
       # Anime profiles (uses movie quality definitions above)
       - template: radarr-quality-profile-anime
       - template: radarr-custom-formats-anime
+      # French MULTi (original audio + French) profiles
+      - template: radarr-quality-profile-hd-bluray-web-french-multi-vo
+      - template: radarr-custom-formats-hd-bluray-web-french-multi-vo
