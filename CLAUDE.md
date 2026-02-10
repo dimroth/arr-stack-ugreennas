@@ -38,6 +38,7 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 - **Tailscale** - Mesh VPN subnet router (full remote LAN access to `.lan` domains and admin UIs)
 - **Traefik** - Reverse proxy (routes `sonarr.lan` → correct container)
 - **Immich** - Self-hosted photo/video management (backup, facial recognition, smart search)
+- **Recyclarr** - TRaSH Guide sync (auto-applies quality profiles/custom formats to Sonarr/Radarr)
 
 **Networking:** Services behind VPN share Gluetun's network (`network_mode: service:gluetun`). They reach each other via `localhost`. Services outside the VPN reach them via `gluetun` hostname.
 
@@ -268,6 +269,7 @@ docker exec pihole pihole reloaddns
 | TeslaMate Grafana | Pre-built dashboards for Tesla data (172.20.0.11:3000, mapped to NAS_IP:3100). Access at `grafana-tesla.lan`. Default login: admin/admin. |
 | Mosquitto | MQTT broker for TeslaMate (172.20.0.17:1883). Internal only, no auth (local network). |
 | Immich | Self-hosted photo/video management (172.20.0.18:2283). 4 containers: server, machine-learning (OpenVINO for Intel N100), PostgreSQL (with pgvecto.rs), Redis (Valkey). Photos stored at `/volume1/immich/upload`. Safe to expose publicly (built-in auth). First registered user becomes admin. Requires `IMMICH_VERSION` and `IMMICH_DB_PASSWORD` in `.env`. |
+| Recyclarr | TRaSH Guide sync (172.20.0.22). No web UI. Config: `recyclarr/recyclarr.yml`, secrets: `recyclarr/secrets.yml` (gitignored). Manual sync: `docker compose run --rm recyclarr sync`. |
 
 ## Container Updates
 

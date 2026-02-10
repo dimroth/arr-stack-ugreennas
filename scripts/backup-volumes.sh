@@ -120,6 +120,7 @@ VOLUME_SUFFIXES=(
   uptime-kuma-data        # Monitor configurations
   pihole-etc-dnsmasq      # Custom DNS settings (small)
   tailscale-state         # Tailscale node identity and keys
+  recyclarr-config        # TRaSH Guide sync cache and state
 )
 
 # Request manager - detect which variant is in use (Jellyfin or Plex)

@@ -31,6 +31,7 @@ volumes:
   immich-postgres:
   immich-redis:
   immich-ml-cache:
+  recyclarr-config:
 
 #########################
 # Networks              #
@@ -661,3 +662,27 @@ services:
       retries: 3
       start_period: 2m
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RECYCLARR - TRaSH Guide sync. Applies recommended quality profiles and
+  # custom formats to Sonarr/Radarr on a daily schedule. No web UI.
+  # ═══════════════════════════════════════════════════════════════════════════
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr
+    container_name: recyclarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    user: ${PUID}:${PGID}
+    environment:
+      - TZ=${TZ}
+      - CRON_SCHEDULE=${RECYCLARR_CRON:-@daily}
+    volumes:
+      - recyclarr-config:/config
+      - ./recyclarr/recyclarr.yml:/config/recyclarr.yml:ro
+      - ./recyclarr/secrets.yml:/config/secrets.yml:ro
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.22
+    restart: always
+    logging: *default-logging
