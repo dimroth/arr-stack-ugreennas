@@ -42,6 +42,7 @@ source "$SCRIPT_DIR/lib/check-env-backup.sh"
 source "$SCRIPT_DIR/lib/check-uptime-monitors.sh"
 source "$SCRIPT_DIR/lib/check-dns-duplicates.sh"
 source "$SCRIPT_DIR/lib/check-domains.sh"
+source "$SCRIPT_DIR/lib/check-image-versions.sh"
 
 # Track results
 ERRORS=0
@@ -146,6 +147,23 @@ echo ""
 # ==========================================
 echo -e "${BLUE}10. Checking domain accessibility...${NC}"
 check_domains
+echo ""
+
+# ==========================================
+# CHECK 11: Image Version Staleness (WARNS)
+# ==========================================
+echo -e "${BLUE}11. Checking for image updates...${NC}"
+# Timeout after 30s to prevent slow registries from blocking commits
+_timeout_cmd=""
+command -v timeout &>/dev/null && _timeout_cmd="timeout"
+command -v gtimeout &>/dev/null && _timeout_cmd="gtimeout"
+if [[ -n "$_timeout_cmd" ]]; then
+    $_timeout_cmd 30 bash -c "source '$SCRIPT_DIR/lib/common.sh'; source '$SCRIPT_DIR/lib/check-image-versions.sh'; check_image_versions" 2>/dev/null || {
+        [[ $? -eq 124 ]] && echo "    SKIP: Registry checks timed out (30s)"
+    }
+else
+    check_image_versions
+fi
 echo ""
 
 # ==========================================

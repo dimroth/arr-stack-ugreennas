@@ -96,6 +96,8 @@ arr-stack network (172.20.0.0/24)
 │ 172.20.0.12  │ Cloudflared  │ Tunnel to Cloudflare           │ + remote access  │
 │ 172.20.0.13  │ Uptime Kuma  │ Monitoring                     │ Optional         │
 │ 172.20.0.14  │ duc          │ Disk usage                     │ Optional         │
+│ 172.20.0.15  │ Beszel       │ System monitoring              │ Optional         │
+│ 172.20.0.16  │ DIUN         │ Image update notifier          │ Optional         │
 │ 172.20.0.16  │ Tailscale    │ Mesh VPN subnet router (+macvlan)│ + Tailscale     │
 │ 172.20.0.18  │ Immich       │ Photo/video server               │ + Immich        │
 │ 172.20.0.19  │ Immich ML    │ Facial recognition, smart search │ + Immich        │

@@ -155,6 +155,14 @@ sudo chown -R 1000:1000 /volume2/docker/arr-stack
 
 **Note:** Use `sudo` for Docker commands on Ugreen NAS. Service configs are stored in Docker named volumes (auto-created on first run).
 
+**Antivirus tip:** UGOS has a built-in antivirus scanner that runs scheduled scans. The default settings can scan your entire Media folder, taking 40-50+ hours and causing system slowdowns. To fix:
+1. Open **Security** app → **Scheduled Scan**
+2. Remove `/volume1/Media` from the scan targets
+3. Change frequency from daily to weekly
+4. Under "Scan file types", select **Specific** and uncheck **Multimedia Data**
+
+Scanning media files for viruses is unnecessary - video/audio files can't contain executable malware.
+
 </details>
 
 <details>
@@ -385,11 +393,11 @@ docker compose -f docker-compose.arr-stack.yml up -d
 # Check all containers are running
 docker ps
 
-# Check VPN connection
-docker logs gluetun | grep -i "connected"
+# Check VPN connection (should show a VPN IP and location)
+docker logs gluetun 2>&1 | grep "Public IP address" | tail -1
 
 # Verify VPN IP (should NOT be your home IP)
-docker exec gluetun wget -qO- ifconfig.me
+docker exec gluetun wget -qO- https://ipinfo.io/ip
 ```
 
 ---
@@ -544,6 +552,20 @@ Settings → System → Audio:
 Now 4K Dolby Vision + TrueHD Atmos content will direct play without transcoding.
 
 </details>
+
+#### RAID5 Streaming Tuning
+
+If you're using RAID5 with spinning HDDs and experience playback stuttering on large files (especially 4K remuxes), the default read-ahead buffer is too small. Apply this tuning on your NAS:
+
+```bash
+sudo bash -c '
+echo 4096 > /sys/block/md1/queue/read_ahead_kb
+echo 4096 > /sys/block/dm-0/queue/read_ahead_kb
+echo 4096 > /sys/block/md1/md/stripe_cache_size
+'
+```
+
+Add a root crontab `@reboot` job to persist across reboots (do **not** use `/etc/rc.local` — UGOS overwrites it on firmware updates). See [Troubleshooting: Jellyfin Video Stutters](TROUBLESHOOTING.md#jellyfin-video-stuttersfreezes-every-few-minutes) for full details.
 
 ### 4.2 qBittorrent (Torrent Downloads)
 
@@ -746,7 +768,7 @@ If you have both qBittorrent and SABnzbd configured, Sonarr/Radarr will grab whi
 
 This gives Usenet a 30-minute head start before considering torrents.
 
-> **Note:** Repeat in both Sonarr and Radarr if you want consistent behavior.
+> **Note:** Do this in both Sonarr and Radarr (same steps in each).
 
 ### 4.10 Pi-hole (DNS + DHCP)
 
@@ -797,8 +819,8 @@ Time to verify everything is connected and protected before you start adding con
 
 Run on NAS via SSH:
 ```bash
-docker exec gluetun wget -qO- ifconfig.me       # Should show VPN IP, not your home IP
-docker exec qbittorrent wget -qO- ifconfig.me   # Same - confirms qBit uses VPN
+docker exec gluetun wget -qO- https://ipinfo.io/ip       # Should show VPN IP, not your home IP
+docker exec qbittorrent wget -qO- https://ipinfo.io/ip   # Same - confirms qBit uses VPN
 ```
 
 **Thorough test:** Visit [ipleak.net](https://ipleak.net) from your browser, then run the same test from inside qBittorrent:

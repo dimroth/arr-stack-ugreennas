@@ -23,6 +23,7 @@ check_secrets() {
             .env) continue ;;  # .env should be gitignored anyway
             scripts/lib/check-*.sh) continue ;;  # These contain example patterns
             scripts/lib/common.sh) continue ;;
+            tests/fixtures/*) continue ;;  # Test fixtures contain intentional fake secrets
             *.md) continue ;;  # Documentation may contain examples
         esac
 
@@ -78,6 +79,36 @@ check_secrets() {
             match=$(echo "$content" | grep -oE '(PASSWORD|SECRET|API_KEY)=[A-Za-z0-9+/=]{30,}$')
             if ! echo "$match" | grep -qiE '(your|here|example|placeholder|xxx)'; then
                 echo "    WARNING: Possible secret value in $file"
+                ((errors++))
+            fi
+        fi
+
+        # Pattern 7: OpenVPN credentials (non-placeholder values)
+        if echo "$content" | grep -qE 'OPENVPN_(USER|PASSWORD)=.{30,}' 2>/dev/null; then
+            local match
+            match=$(echo "$content" | grep -oE 'OPENVPN_(USER|PASSWORD)=.{30,}')
+            if ! echo "$match" | grep -qiE '(your|here|example|placeholder|xxx)'; then
+                echo "    ERROR: Possible OpenVPN credential in $file"
+                ((errors++))
+            fi
+        fi
+
+        # Pattern 8: Bearer/Auth tokens in non-example files
+        if echo "$content" | grep -qE '(Authorization|Bearer|TOKEN):\s*(Bearer\s+)?[A-Za-z0-9._-]{20,}' 2>/dev/null; then
+            local match
+            match=$(echo "$content" | grep -oE '(Authorization|Bearer|TOKEN):\s*(Bearer\s+)?[A-Za-z0-9._-]{20,}')
+            if ! echo "$match" | grep -qiE '(your|here|example|placeholder|xxx)'; then
+                echo "    ERROR: Possible auth token in $file"
+                ((errors++))
+            fi
+        fi
+
+        # Pattern 9: SSH/generic passwords (15+ chars, non-placeholder)
+        if echo "$content" | grep -qE '(SSH_PASS|_PASSWORD|_PASSWD)=[^[:space:]]{15,}' 2>/dev/null; then
+            local match
+            match=$(echo "$content" | grep -oE '(SSH_PASS|_PASSWORD|_PASSWD)=[^[:space:]]{15,}')
+            if ! echo "$match" | grep -qiE '(your|here|example|placeholder|xxx)'; then
+                echo "    WARNING: Possible password in $file"
                 ((errors++))
             fi
         fi

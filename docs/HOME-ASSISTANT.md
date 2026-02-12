@@ -1,6 +1,6 @@
 # Home Assistant Integration
 
-Send notifications from Sonarr/Radarr to Home Assistant.
+Send notifications from Sonarr/Radarr, DIUN, Uptime Kuma, and Beszel to Home Assistant.
 
 ## Prerequisites
 
@@ -52,6 +52,42 @@ Change `notify.persistent_notification` to `notify.mobile_app_your_phone` for pu
 
 Click **Test** to verify.
 
+## DIUN → Home Assistant
+
+Requires `docker-compose.utilities.yml` deployed.
+
+DIUN monitors all running containers and sends a webhook when a newer image version is available on the registry.
+
+### Step 1: Create HA Automation
+
+```yaml
+alias: DIUN - Arr Stack Image Update Notification
+trigger:
+  - platform: webhook
+    webhook_id: diun-updates
+    allowed_methods:
+      - POST
+action:
+  - service: persistent_notification.create
+    data:
+      title: "Arr Stack - Docker Image Update"
+      message: "{{ trigger.json.diun_entry.image }} has a new version"
+```
+
+### Step 2: Configure .env
+
+Add the webhook URL to your `.env` on the NAS:
+
+```bash
+DIUN_WEBHOOK_URL=http://homeassistant.lan:8123/api/webhook/diun-updates
+```
+
+DIUN checks registries daily at 6am by default. Customise with:
+
+```bash
+DIUN_SCHEDULE=0 6 * * *  # cron format
+```
+
 ## Uptime Kuma → Home Assistant
 
 Requires `docker-compose.utilities.yml` deployed.
@@ -60,3 +96,46 @@ In Uptime Kuma: Settings → Notifications → Setup Notification
 - Type: Home Assistant
 - URL: `http://homeassistant.lan:8123`
 - Long-Lived Access Token: (create in HA → Profile → Long-Lived Access Tokens)
+
+## Beszel → Home Assistant
+
+Requires `docker-compose.utilities.yml` deployed.
+
+### Step 1: Create HA Automation
+
+Beszel sends a different JSON format than Sonarr/Radarr, so create a separate automation:
+
+```yaml
+alias: Beszel Alerts
+description: System alerts from Beszel monitoring
+trigger:
+  - platform: webhook
+    webhook_id: beszel-alerts
+    local_only: false
+action:
+  - service: notify.persistent_notification
+    data:
+      title: "{{ trigger.json.title | default('Beszel Alert') }}"
+      message: "{{ trigger.json.message | default(trigger.json | string) }}"
+mode: single
+```
+
+### Step 2: Configure Beszel
+
+In Beszel: Settings → Notifications → Add URL
+
+**Important:** Beszel can't resolve `.lan` domains (uses Docker internal DNS). Use your Home Assistant IP address directly.
+
+```
+generic+http://HOME_ASSISTANT_IP:8123/api/webhook/beszel-alerts?template=json
+```
+
+Example: `generic+http://10.10.0.20:8123/api/webhook/beszel-alerts?template=json`
+
+Click **Test URL** to verify.
+
+### Step 3: Configure Alerts
+
+In Beszel, click on your system → set alert thresholds for CPU, Memory, Disk, Load Average, etc.
+
+To view/manage alerts: `http://beszel.lan/_/#/collections` → select the alerts collection.

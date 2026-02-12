@@ -209,7 +209,7 @@ If Pi-hole is down and you've lost DNS:
 1. **Connect to mobile hotspot** (different network, uses mobile DNS)
 2. **SSH to NAS using IP address** (not hostname):
    ```bash
-   ssh <user>@<NAS_IP>  # e.g., ssh mooseadmin@192.168.0.136
+   ssh <user>@<NAS_IP>  # e.g., ssh mooseadmin@10.10.0.10
    ```
 3. **Start the stack**:
    ```bash
@@ -408,6 +408,20 @@ TRAEFIK_DASHBOARD_AUTH=admin:$2y$05$abc...
 # Correct
 TRAEFIK_DASHBOARD_AUTH='admin:$2y$05$abc...'
 ```
+
+## Troubleshooting: SABnzbd Stuck Downloads
+
+If a movie/show shows "Downloading" in Radarr at 100% but has 0 B file size:
+
+1. Check for `_UNPACK_*` directory buildup in `/volume1/Media/downloads/` — each is a failed unpack retry wasting 20-50 GB
+2. The actual completed file is usually in `/volume1/Media/downloads/incomplete/<release>/` with an obfuscated filename
+3. SABnzbd UI/API will likely be unresponsive (locked by the post-processing loop)
+4. Fix: `docker stop sabnzbd` → delete `postproc2.sab` from admin dir → delete `_UNPACK_*` dirs → move file to movie folder → `docker start sabnzbd` → clear Radarr queue → trigger RefreshMovie
+5. Key lesson: the SABnzbd history API delete does NOT clear the postproc queue — must delete `postproc2.sab` while stopped
+6. See `docs/TROUBLESHOOTING.md` for full step-by-step
+
+**SABnzbd API** (via container): `http://localhost:8080/api?apikey=KEY&mode=history&output=json`
+**Radarr API** (via container): `http://localhost:7878/api/v3/...?apikey=KEY`
 
 ## GitHub Releases
 

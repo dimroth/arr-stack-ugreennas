@@ -12,6 +12,7 @@ volumes:
   duc-index:
   uptime-kuma-data:
   beszel-data:
+  diun-data:
 
 #########################
 # Networks              #
@@ -39,10 +40,10 @@ services:
   # No web UI. Runs silently in background.
   # ═══════════════════════════════════════════════════════════════════════════
   deunhealth:
-    image: qmcgaw/deunhealth
+    image: qmcgaw/deunhealth:v0.3.0
     container_name: deunhealth
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ=${TZ}
     restart: always
@@ -86,7 +87,7 @@ services:
   # Note: Re-indexes daily at 4am. Manual: docker restart duc
   # ═══════════════════════════════════════════════════════════════════════════
   duc:
-    image: mkoestler/duc-service:latest
+    image: mkoestler/duc-service:v1.1.0
     container_name: duc
     networks:
       arr-stack:
@@ -125,7 +126,7 @@ services:
   # Access: beszel.lan | NAS_IP:8090 (LAN-only, use WireGuard for remote)
   # ═══════════════════════════════════════════════════════════════════════════
   beszel:
-    image: henrygd/beszel
+    image: henrygd/beszel:0.18
     container_name: beszel
     restart: always
     ports:
@@ -148,7 +149,7 @@ services:
       start_period: 30s
 
   beszel-agent:
-    image: henrygd/beszel-agent
+    image: henrygd/beszel-agent:0.18
     container_name: beszel-agent
     restart: always
     network_mode: host
@@ -164,3 +165,30 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DIUN - Docker Image Update Notifier. Watches running containers and sends
+  # webhook notifications when newer image versions are available on registries.
+  # No web UI. Configure DIUN_WEBHOOK_URL in .env to receive alerts.
+  # ═══════════════════════════════════════════════════════════════════════════
+  diun:
+    image: crazymax/diun:v4.31.0
+    container_name: diun
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - diun-data:/data
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.16
+    environment:
+      - TZ=${TZ}
+      - DIUN_WATCH_WORKERS=5
+      - DIUN_WATCH_SCHEDULE=${DIUN_SCHEDULE:-0 6 * * *}
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      - DIUN_NOTIF_WEBHOOK_ENDPOINT=${DIUN_WEBHOOK_URL}
+      - DIUN_NOTIF_WEBHOOK_METHOD=POST
+      - DIUN_NOTIF_WEBHOOK_HEADERS_0_NAME=Content-Type
+      - DIUN_NOTIF_WEBHOOK_HEADERS_0_VALUE=application/json
+    logging: *default-logging

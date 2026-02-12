@@ -65,7 +65,7 @@ services:
   # All services below marked "via VPN" share this network for privacy.
   # ═══════════════════════════════════════════════════════════════════════════
   gluetun:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun:v3.41
     container_name: gluetun
     depends_on:
       pihole:
@@ -74,8 +74,6 @@ services:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
-    env_file:
-      - .env
     volumes:
       - gluetun-config:/gluetun
     environment:
@@ -117,7 +115,7 @@ services:
   # Access: qbit.lan | qbit.yourdomain.com | NAS_IP:8085
   # ═══════════════════════════════════════════════════════════════════════════
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent
+    image: lscr.io/linuxserver/qbittorrent:5.1.4
     container_name: qbittorrent
     network_mode: "service:gluetun"
     depends_on:
@@ -133,7 +131,6 @@ services:
     volumes:
       - qbittorrent-config:/config
       - ${MEDIA_ROOT}/downloads:/downloads
-      - ${MEDIA_ROOT}:/media
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: always
@@ -150,7 +147,7 @@ services:
   # Access: sabnzbd.lan | sabnzbd.yourdomain.com | NAS_IP:8082
   # ═══════════════════════════════════════════════════════════════════════════
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:latest
+    image: lscr.io/linuxserver/sabnzbd:4.5.5
     container_name: sabnzbd
     network_mode: "service:gluetun"
     depends_on:
@@ -181,7 +178,7 @@ services:
   # Access: sonarr.lan | sonarr.yourdomain.com | NAS_IP:8989
   # ═══════════════════════════════════════════════════════════════════════════
   sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
+    image: lscr.io/linuxserver/sonarr:4.0.16
     container_name: sonarr
     network_mode: "service:gluetun"
     depends_on:
@@ -212,7 +209,7 @@ services:
   # Access: prowlarr.lan | prowlarr.yourdomain.com | NAS_IP:9696
   # ═══════════════════════════════════════════════════════════════════════════
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: lscr.io/linuxserver/prowlarr:2.3.0
     container_name: prowlarr
     network_mode: "service:gluetun"
     depends_on:
@@ -241,7 +238,7 @@ services:
   # Access: radarr.lan | radarr.yourdomain.com | NAS_IP:7878
   # ═══════════════════════════════════════════════════════════════════════════
   radarr:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:6.0.4
     container_name: radarr
     network_mode: "service:gluetun"
     depends_on:
@@ -272,7 +269,7 @@ services:
   # Access: jellyfin.lan | jellyfin.yourdomain.com | NAS_IP:8096
   # ═══════════════════════════════════════════════════════════════════════════
   jellyfin:
-    image: jellyfin/jellyfin
+    image: jellyfin/jellyfin:10.11
     container_name: jellyfin
     ports:
       - "8096:8096"     # Web UI
@@ -308,7 +305,7 @@ services:
   # For: Home Pro + Anywhere setups
   # ═══════════════════════════════════════════════════════════════════════════
   pihole:
-    image: pihole/pihole:latest
+    image: pihole/pihole:2025.11.1
     container_name: pihole
     # No port mappings needed - Pi-hole is accessed directly on its macvlan LAN IP
     # (Docker port mappings break when macvlan is attached due to NAT return routing)
@@ -332,8 +329,6 @@ services:
       - ./pihole/02-local-dns.conf:/etc/dnsmasq.d/02-local-dns.conf:ro
     cap_add:
       - NET_ADMIN
-      - SYS_NICE
-      - SYS_TIME
     restart: always
     logging: *default-logging
     healthcheck:
@@ -347,6 +342,10 @@ services:
   # TAILSCALE - Mesh VPN subnet router. Gives remote devices full LAN access.
   # Unlike Cloudflare Tunnel (HTTP only), provides network-level access to all
   # .lan domains and admin UIs. Free for personal use, works behind CGNAT.
+  #
+  # NOTE: macvlan (traefik-lan) can't reach the Docker host. We add a static
+  # route for NAS_IP through the bridge gateway so subnet-routed traffic to
+  # the NAS itself (SSH, web UIs) works via Tailscale.
   # ═══════════════════════════════════════════════════════════════════════════
   tailscale:
     image: tailscale/tailscale:latest
@@ -367,6 +366,9 @@ services:
       - TS_ROUTES=${LAN_SUBNET}
       - TS_EXTRA_ARGS=--advertise-exit-node --accept-routes
       - TS_USERSPACE=false
+    command: >-
+      sh -c "ip route add ${NAS_IP}/32 via 172.20.0.1 dev eth0 2>/dev/null || true;
+      exec /usr/local/bin/containerboot"
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv6.conf.all.forwarding=1
@@ -389,7 +391,7 @@ services:
   # Access: jellyseerr.lan | jellyseerr.yourdomain.com | NAS_IP:5055
   # ═══════════════════════════════════════════════════════════════════════════
   jellyseerr:
-    image: fallenbagel/jellyseerr:latest
+    image: fallenbagel/jellyseerr:2.7
     container_name: jellyseerr
     depends_on:
       gluetun:
@@ -419,7 +421,7 @@ services:
   # Access: bazarr.lan | bazarr.yourdomain.com | NAS_IP:6767
   # ═══════════════════════════════════════════════════════════════════════════
   bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
+    image: lscr.io/linuxserver/bazarr:v1.5.5
     container_name: bazarr
     depends_on:
       gluetun:
@@ -541,7 +543,7 @@ services:
   # No web UI. Used internally by Prowlarr at 172.20.0.10:8191
   # ═══════════════════════════════════════════════════════════════════════════
   flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:v3.4.6
     container_name: flaresolverr
     environment:
       - LOG_LEVEL=info

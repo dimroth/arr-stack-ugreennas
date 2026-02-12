@@ -15,7 +15,7 @@ check_conflicts() {
         # Extract host ports (the left side of port mappings like "8080:80")
         local ports
         ports=$(grep -E '^\s+-\s*"?[0-9]+:[0-9]+"?\s*$' "$compose_file" 2>/dev/null | \
-            sed -E 's/.*"?([0-9]+):[0-9]+"?.*/\1/' | sort)
+            sed -E 's/^[[:space:]]*-[[:space:]]*"?([0-9]+):.*/\1/' | sort)
 
         # Check for duplicate ports
         local dup_ports
@@ -31,7 +31,7 @@ check_conflicts() {
         # Extract static IPs (ipv4_address: X.X.X.X)
         local ips
         ips=$(grep -E 'ipv4_address:\s*[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$compose_file" 2>/dev/null | \
-            sed -E 's/.*ipv4_address:\s*([0-9.]+).*/\1/' | sort)
+            grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort)
 
         # Check for duplicate IPs
         local dup_ips
@@ -44,6 +44,74 @@ check_conflicts() {
             ((errors++))
         fi
     done
+
+    # ── Cross-file duplicate detection ──────────────────────────────
+    # Collect ALL ports and IPs across every compose file and flag duplicates
+    # Skip plex-arr-stack (alternative to arr-stack, intentionally shares ports/IPs)
+    local all_ports_with_files=""
+    local all_ips_with_files=""
+
+    for compose_file in "$repo_root"/docker-compose*.yml; do
+        [[ -f "$compose_file" ]] || continue
+        local fname
+        fname=$(basename "$compose_file")
+        # Skip alternative stack variants (they intentionally mirror the primary stack)
+        [[ "$fname" == "docker-compose.plex-arr-stack.yml" ]] && continue
+
+        # Collect ports with their source file
+        local file_ports
+        file_ports=$(grep -E '^\s+-\s*"?[0-9]+:[0-9]+"?\s*$' "$compose_file" 2>/dev/null | \
+            sed -E 's/^[[:space:]]*-[[:space:]]*"?([0-9]+):.*/\1/')
+        while IFS= read -r p; do
+            [[ -z "$p" ]] && continue
+            all_ports_with_files+="$p $fname"$'\n'
+        done <<< "$file_ports"
+
+        # Collect IPs with their source file
+        local file_ips
+        file_ips=$(grep -E 'ipv4_address:\s*[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$compose_file" 2>/dev/null | \
+            grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+        while IFS= read -r ip; do
+            [[ -z "$ip" ]] && continue
+            all_ips_with_files+="$ip $fname"$'\n'
+        done <<< "$file_ips"
+    done
+
+    # Check for cross-file port duplicates
+    local dup_cross_ports
+    dup_cross_ports=$(echo "$all_ports_with_files" | awk '{print $1}' | sort | uniq -d)
+    while IFS= read -r port; do
+        [[ -z "$port" ]] && continue
+        local files_with_port
+        files_with_port=$(echo "$all_ports_with_files" | awk -v p="$port" '$1 == p {print $2}' | sort -u)
+        local file_count
+        file_count=$(echo "$files_with_port" | wc -l | tr -d ' ')
+        if [[ "$file_count" -gt 1 ]]; then
+            echo "    ERROR: Port $port used across multiple files:"
+            echo "$files_with_port" | while read -r f; do
+                echo "      - $f"
+            done
+            ((errors++))
+        fi
+    done <<< "$dup_cross_ports"
+
+    # Check for cross-file IP duplicates
+    local dup_cross_ips
+    dup_cross_ips=$(echo "$all_ips_with_files" | awk '{print $1}' | sort | uniq -d)
+    while IFS= read -r ip; do
+        [[ -z "$ip" ]] && continue
+        local files_with_ip
+        files_with_ip=$(echo "$all_ips_with_files" | awk -v i="$ip" '$1 == i {print $2}' | sort -u)
+        local file_count
+        file_count=$(echo "$files_with_ip" | wc -l | tr -d ' ')
+        if [[ "$file_count" -gt 1 ]]; then
+            echo "    ERROR: IP $ip used across multiple files:"
+            echo "$files_with_ip" | while read -r f; do
+                echo "      - $f"
+            done
+            ((errors++))
+        fi
+    done <<< "$dup_cross_ips"
 
     return $errors
 }

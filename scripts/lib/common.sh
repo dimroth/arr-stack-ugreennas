@@ -174,7 +174,7 @@ has_custom_domain() {
 # ============================================
 
 # Standard SSH options for non-interactive, fast-fail connections
-SSH_OPTS="-n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=2 -o ConnectionAttempts=1 -o BatchMode=yes -o LogLevel=ERROR"
+SSH_OPTS="-n -o StrictHostKeyChecking=accept-new -o ConnectTimeout=2 -o ConnectionAttempts=1 -o BatchMode=yes -o LogLevel=ERROR"
 
 # Check if NAS is reachable (quick ping)
 # Returns: 0 if reachable, 1 if not

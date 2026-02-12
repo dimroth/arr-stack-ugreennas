@@ -65,7 +65,7 @@ services:
   # All services below marked "via VPN" share this network for privacy.
   # ═══════════════════════════════════════════════════════════════════════════
   gluetun:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun:v3.41
     container_name: gluetun
     depends_on:
       pihole:
@@ -74,8 +74,6 @@ services:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
-    env_file:
-      - .env
     volumes:
       - gluetun-config:/gluetun
     environment:
@@ -113,7 +111,7 @@ services:
   # Access: qbit.lan | qbit.yourdomain.com | NAS_IP:8085
   # ═══════════════════════════════════════════════════════════════════════════
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent
+    image: lscr.io/linuxserver/qbittorrent:5.1.4
     container_name: qbittorrent
     network_mode: "service:gluetun"
     depends_on:
@@ -129,7 +127,6 @@ services:
     volumes:
       - qbittorrent-config:/config
       - ${MEDIA_ROOT}/downloads:/downloads
-      - ${MEDIA_ROOT}:/media
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: always
@@ -146,7 +143,7 @@ services:
   # Access: sabnzbd.lan | sabnzbd.yourdomain.com | NAS_IP:8082
   # ═══════════════════════════════════════════════════════════════════════════
   sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:latest
+    image: lscr.io/linuxserver/sabnzbd:4.5.5
     container_name: sabnzbd
     network_mode: "service:gluetun"
     depends_on:
@@ -177,7 +174,7 @@ services:
   # Access: sonarr.lan | sonarr.yourdomain.com | NAS_IP:8989
   # ═══════════════════════════════════════════════════════════════════════════
   sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
+    image: lscr.io/linuxserver/sonarr:4.0.16
     container_name: sonarr
     network_mode: "service:gluetun"
     depends_on:
@@ -208,7 +205,7 @@ services:
   # Access: prowlarr.lan | prowlarr.yourdomain.com | NAS_IP:9696
   # ═══════════════════════════════════════════════════════════════════════════
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: lscr.io/linuxserver/prowlarr:2.3.0
     container_name: prowlarr
     network_mode: "service:gluetun"
     depends_on:
@@ -237,7 +234,7 @@ services:
   # Access: radarr.lan | radarr.yourdomain.com | NAS_IP:7878
   # ═══════════════════════════════════════════════════════════════════════════
   radarr:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:6.0.4
     container_name: radarr
     network_mode: "service:gluetun"
     depends_on:
@@ -268,7 +265,7 @@ services:
   # Access: plex.lan | plex.yourdomain.com | NAS_IP:32400
   # ═══════════════════════════════════════════════════════════════════════════
   plex:
-    image: lscr.io/linuxserver/plex:latest
+    image: lscr.io/linuxserver/plex:1.41
     container_name: plex
     ports:
       - "32400:32400"  # Local network access
@@ -300,7 +297,7 @@ services:
   # For: Home Pro + Anywhere setups
   # ═══════════════════════════════════════════════════════════════════════════
   pihole:
-    image: pihole/pihole:latest
+    image: pihole/pihole:2025.11.1
     container_name: pihole
     ports:
       - "${NAS_IP}:53:53/tcp"
@@ -321,8 +318,6 @@ services:
       - ./pihole/02-local-dns.conf:/etc/dnsmasq.d/02-local-dns.conf:ro
     cap_add:
       - NET_ADMIN
-      - SYS_NICE
-      - SYS_TIME
     restart: always
     logging: *default-logging
     healthcheck:
@@ -337,7 +332,7 @@ services:
   # Access: overseerr.lan | overseerr.yourdomain.com | NAS_IP:5055
   # ═══════════════════════════════════════════════════════════════════════════
   overseerr:
-    image: lscr.io/linuxserver/overseerr:latest
+    image: lscr.io/linuxserver/overseerr:1.33
     container_name: overseerr
     depends_on:
       gluetun:
@@ -367,7 +362,7 @@ services:
   # Access: bazarr.lan | bazarr.yourdomain.com | NAS_IP:6767
   # ═══════════════════════════════════════════════════════════════════════════
   bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
+    image: lscr.io/linuxserver/bazarr:v1.5.5
     container_name: bazarr
     depends_on:
       gluetun:
@@ -399,7 +394,7 @@ services:
   # No web UI. Used internally by Prowlarr at 172.20.0.10:8191
   # ═══════════════════════════════════════════════════════════════════════════
   flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:v3.4.6
     container_name: flaresolverr
     environment:
       - LOG_LEVEL=info

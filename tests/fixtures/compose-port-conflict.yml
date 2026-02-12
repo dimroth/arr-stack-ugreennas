@@ -1,0 +1,23 @@
+# Fixture: intentional port conflict for testing check_conflicts
+services:
+  service-a:
+    image: alpine:3.20
+    ports:
+      - "8080:80"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  service-b:
+    image: alpine:3.20
+    ports:
+      - "8080:8080"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

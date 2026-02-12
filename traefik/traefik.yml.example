@@ -10,7 +10,7 @@ global:
 # API and Dashboard
 api:
   dashboard: true
-  insecure: true
+  insecure: false
 
 # Entry Points
 entryPoints:

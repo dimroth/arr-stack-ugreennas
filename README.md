@@ -57,6 +57,7 @@ Watch: Jellyfin — locally or remotely via Traefik
 | [Upgrading](docs/UPGRADING.md) | How to pull updates and redeploy |
 | [Backup & Restore](docs/BACKUP.md) | Backup your configs, restore after disaster |
 | [Home Assistant](docs/HOME-ASSISTANT.md) | Get notifications when downloads complete |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Fix common issues: stuck downloads, DNS, 4K stuttering |
 | [Legal](docs/LEGAL.md) | What this software is for, disclaimer |
 
 ## Like This Project?
