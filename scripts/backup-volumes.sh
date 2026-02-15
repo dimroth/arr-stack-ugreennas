@@ -8,10 +8,13 @@
 # Options:
 #   --tar           Create a .tar.gz archive (recommended for off-NAS transfer)
 #   --prefix NAME   Volume prefix (default: auto-detect from running containers)
+#   --usb DIR_NAME  Dynamically find USB device under /mnt/@usb/sd*/ containing DIR_NAME
+#                   (device letters change on reboot, so never hardcode e.g. /mnt/@usb/sdd1)
 #
 # Examples:
 #   ./scripts/backup-volumes.sh --tar                     # Backup to /tmp, create tarball
 #   ./scripts/backup-volumes.sh --tar ~/backups           # Backup to custom dir with tarball
+#   ./scripts/backup-volumes.sh --tar --usb arr-backups   # Auto-find USB, save to arr-backups/
 #   ./scripts/backup-volumes.sh --prefix media-stack      # Use custom volume prefix
 #
 # Pulling backup to another machine:
@@ -27,6 +30,19 @@
 #
 
 # Don't use set -e as arithmetic operations can return non-zero
+
+# --- Failure notifications via Home Assistant webhook ---
+notify_failure() {
+  local msg="${1:-Backup failed}"
+  echo "ERROR: ${msg}"
+  if [ -n "${HA_WEBHOOK_URL:-}" ]; then
+    curl -s -m 10 -X POST "$HA_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -d "{\"title\":\"Arr Stack: Backup Failed\",\"message\":\"${msg}\"}" || true
+  fi
+}
+STEP="initialising"
+trap 'notify_failure "Failed during: ${STEP}. Check /var/log/arr-backup.log"' ERR
 
 # Ensure critical services are running on ANY exit (normal, error, or interrupt)
 ensure_services_running() {
@@ -48,12 +64,43 @@ ensure_services_running() {
     docker compose -f "$COMPOSE_FILE" up -d $STOPPED 2>/dev/null
   fi
 }
-trap ensure_services_running EXIT
+trap 'ensure_services_running' EXIT
+
+# Find USB backup directory dynamically (device letters change on reboot)
+# Searches /mnt/@usb/sd*/ for a subdirectory matching the given name,
+# falling back to the first non-empty mounted device.
+find_usb_dir() {
+  local dir_name="$1"
+  local usb_base="/mnt/@usb"
+
+  # First: look for an existing backup directory by name
+  for dev in "$usb_base"/sd*/; do
+    [ -d "$dev" ] || continue
+    if [ -d "$dev$dir_name" ]; then
+      echo "$dev$dir_name"
+      return 0
+    fi
+  done
+
+  # Fallback: first non-empty mounted USB device
+  for dev in "$usb_base"/sd*/; do
+    [ -d "$dev" ] || continue
+    # Check it's actually mounted (not just an empty mount point)
+    if [ "$(ls -A "$dev" 2>/dev/null)" ]; then
+      echo "$dev$dir_name"
+      return 0
+    fi
+  done
+
+  echo "ERROR: No USB device found under $usb_base" >&2
+  return 1
+}
 
 # Parse arguments
 CREATE_TAR=false
 BACKUP_DIR=""
 VOLUME_PREFIX=""
+USB_DIR_NAME=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -65,6 +112,10 @@ while [[ $# -gt 0 ]]; do
       VOLUME_PREFIX="$2"
       shift 2
       ;;
+    --usb)
+      USB_DIR_NAME="$2"
+      shift 2
+      ;;
     *)
       BACKUP_DIR="$1"
       shift
@@ -72,6 +123,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve USB backup directory if --usb was specified
+STEP="finding USB device"
+if [ -n "$USB_DIR_NAME" ]; then
+  BACKUP_DIR=$(find_usb_dir "$USB_DIR_NAME") || { notify_failure "Failed during: ${STEP}. No USB device found under /mnt/@usb/"; exit 1; }
+  echo "USB device found: $BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR"
+fi
+
+STEP="detecting volume prefix"
 # Auto-detect volume prefix from running containers if not specified
 if [ -z "$VOLUME_PREFIX" ]; then
   # Try to find prefix from gluetun container's volumes
@@ -139,6 +199,7 @@ fi
 #   jellyfin-cache          - transcoding cache, fully regenerates
 #   duc-index               - disk usage index, regenerates on restart
 
+STEP="backing up volumes"
 echo "=== Arr-Stack Backup ==="
 echo "Volume prefix: ${VOLUME_PREFIX}_*"
 echo "Backup dir:    $BACKUP_DIR"
@@ -189,8 +250,10 @@ echo "Total size: $TOTAL_SIZE"
 if [ $FAILED -gt 0 ]; then
   echo ""
   echo "WARNING: Some volumes failed to backup. Check permissions."
+  notify_failure "${FAILED} volume(s) failed to backup. ${BACKED_UP} succeeded, ${SKIPPED} skipped."
 fi
 
+STEP="creating tarball"
 # Create tarball if requested
 if [ "$CREATE_TAR" = true ]; then
   TARBALL="${BACKUP_DIR}.tar.gz"
@@ -208,6 +271,7 @@ if [ "$CREATE_TAR" = true ]; then
   TARBALL_SIZE=$(ls -lh "$TARBALL" | awk '{print $5}')
   echo "Created: $TARBALL ($TARBALL_SIZE)"
 
+  STEP="moving tarball to USB"
   # Move to final destination if specified and different from /tmp
   if [ -n "$FINAL_DEST" ] && [ "$FINAL_DEST" != "/tmp" ]; then
     AVAILABLE_MB=$(df -m "$FINAL_DEST" 2>/dev/null | awk 'NR==2 {print $4}')
@@ -219,7 +283,12 @@ if [ "$CREATE_TAR" = true ]; then
       echo "         Tarball remains in /tmp - copy manually when space available"
     else
       FINAL_TARBALL="$FINAL_DEST/arr-stack-backup-$(date +%Y%m%d).tar.gz"
-      mv "$TARBALL" "$FINAL_TARBALL" 2>/dev/null && TARBALL="$FINAL_TARBALL" && echo "Moved to: $TARBALL"
+      if mv "$TARBALL" "$FINAL_TARBALL" 2>/dev/null; then
+        TARBALL="$FINAL_TARBALL"
+        echo "Moved to: $TARBALL"
+      else
+        notify_failure "Could not move tarball to ${FINAL_DEST}. Backup remains in /tmp."
+      fi
     fi
   fi
 

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2] - 2026-02-13
+
+### Added
+- **Swappiness tuning**: Set `vm.swappiness=10` via root `@reboot` crontab. UGOS default (60) aggressively swaps out app pages even with plenty of free RAM. Reduces unnecessary zram overhead and keeps container memory resident
+- **Backup to USB**: `backup-volumes.sh --usb DIR_NAME` dynamically finds USB devices under `/mnt/@usb/sd*/` (device letters change on reboot). Includes 7-day rotation
+- **Backup failure notifications**: Home Assistant webhook alerts when backup fails, with step-level error reporting (`HA_WEBHOOK_URL` env var)
+
+### Documentation
+- **RAM upgrade 5-day analysis**: Full Beszel comparison (97 pre vs 289 post samples) showing 91% disk read reduction, 40% CPU drop, zero disk swap. Container memory steady-state measurements. NVMe-for-Docker assessment reconfirmed as not worth it
+- **Swappiness troubleshooting**: New section in TROUBLESHOOTING.md for diagnosing and fixing unnecessary swap with free RAM available
+
+---
+
 ## [1.6.1] - 2026-02-12
 
 ### Fixed

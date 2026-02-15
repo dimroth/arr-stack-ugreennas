@@ -140,3 +140,38 @@ sudo crontab -e
 **Result:** Disk utilization drops from ~96% to ~8-15% during 4K playback. Read latency drops from 20ms to 3-7ms. Stalls eliminated.
 
 **Note:** SSD caching will **not** help with video streaming — it only accelerates frequently re-read data, and video playback is sequential read-once.
+
+## Memory: Unnecessary Swap With Plenty of Free RAM
+
+**Symptom:** `free -h` shows several GB of swap used even though there's plenty of available RAM. System feels slower than expected for the amount of RAM installed.
+
+**Cause:** UGOS default `vm.swappiness=60` tells the kernel to aggressively move inactive pages to swap (including zram) even when RAM is plentiful. This is fine for a desktop but suboptimal for a server where you want application pages to stay resident.
+
+**Diagnose:**
+```bash
+# Check swappiness (60 = too aggressive for a server with plenty of RAM)
+cat /proc/sys/vm/swappiness
+
+# Check swap usage (zram = compressed RAM, not disk — but still has overhead)
+cat /proc/swaps
+free -h
+```
+
+**Fix:**
+```bash
+# Apply immediately
+sudo bash -c 'echo 10 > /proc/sys/vm/swappiness'
+
+# Verify
+cat /proc/sys/vm/swappiness
+# Should show: 10
+```
+
+**Make permanent:** Add to the root `@reboot` crontab (alongside RAID5 tuning if present):
+```bash
+sudo crontab -e
+# Append to existing @reboot line, or add new:
+@reboot sleep 30 && echo 10 > /proc/sys/vm/swappiness
+```
+
+> **Note:** `swappiness=10` doesn't disable swap — the kernel will still swap under real memory pressure. It just stops proactively swapping out app pages to make room for disk cache when there's no pressure.
