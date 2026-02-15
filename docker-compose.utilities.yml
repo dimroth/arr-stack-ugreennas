@@ -67,6 +67,8 @@ services:
       - "3001:3001"  # Local network access only
     environment:
       - TZ=${TZ}
+    dns:
+      - 172.20.0.5  # Pi-hole, so .lan domains resolve
     networks:
       arr-stack:
         ipv4_address: 172.20.0.13  # For monitoring other containers
