@@ -2,14 +2,24 @@
 
 ## ⚠️ FIRST: NAS SSH Access
 
-**Before ANY SSH command, read `config.local.md` for credentials.**
+**Before ANY SSH command, read `config.local.md` for hostname/IP and username.**
+
+The SSH password is stored in `~/.ssh/.nas_pass` (local machine, not in repo). Use `sshpass -f` for all commands:
 
 ```bash
 # Pattern for ALL NAS commands:
-sshpass -p 'PASSWORD' ssh USER@HOST "COMMAND"
+sshpass -f ~/.ssh/.nas_pass ssh USER@HOST 'COMMAND'
 
-# With sudo:
-sshpass -p 'PASSWORD' ssh USER@HOST "echo 'PASSWORD' | sudo -S COMMAND"
+# With sudo (write password to temp file on NAS, then use it):
+sshpass -f ~/.ssh/.nas_pass ssh USER@HOST 'python3 -c "import shutil; shutil.copy2(\"/dev/stdin\", \"/tmp/.sudopw\")" < ~/.ssh/.nas_pass && cat /tmp/.sudopw | sudo -S COMMAND && rm -f /tmp/.sudopw'
+```
+
+**⚠️ Password contains special characters (`\`, `!`, `*`).** Never use `sshpass -p` — it breaks. Always use `sshpass -f` with the password file.
+
+**If `~/.ssh/.nas_pass` doesn't exist**, create it from `config.local.md`:
+```bash
+python3 -c "with open('$HOME/.ssh/.nas_pass', 'w') as f: f.write(r'PASSWORD_FROM_CONFIG')"
+chmod 600 ~/.ssh/.nas_pass
 ```
 
 **NEVER guess usernames or try random SSH keys. The credentials are in `config.local.md`.**
@@ -100,29 +110,25 @@ Forbidden in tracked files: API keys, passwords, tokens, private keys, public IP
 git add -A && git commit -m "..." && git push
 
 # 2. Pull on NAS
-ssh <user>@<nas-host> "cd /volume2/docker/arr-stack && git pull"
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> "cd /volume2/docker/arr-stack && git pull"
 
 # 3. Restart affected services
-ssh <user>@<nas-host> "docker restart traefik"  # For routing changes
-ssh <user>@<nas-host> "cd /volume2/docker/arr-stack && docker compose -f docker-compose.arr-stack.yml up -d"  # For compose changes
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> "docker restart traefik"  # For routing changes
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> "cd /volume2/docker/arr-stack && docker compose -f docker-compose.arr-stack.yml up -d"  # For compose changes
 ```
 
 ## NAS Access
 
-**See `config.local.md` for hostname and username.**
+**See `config.local.md` for hostname and username. Password in `~/.ssh/.nas_pass`.**
 
 **On any auth failure, immediately ask the user for credentials. Don't retry or guess.**
 
 ```bash
-# Add user to docker group (one-time setup, avoids needing sudo for docker):
-echo 'PASS' | sudo -S usermod -aG docker <user>
-# Requires new SSH session to take effect
+# SSH shorthand (always use sshpass -f, NEVER sshpass -p):
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> 'command'
 
 # SCP doesn't work on UGOS. Use stdin redirect (for rare cases):
-sshpass -p 'PASS' ssh <user>@<nas-host> "cat > /path/file" < localfile
-
-# If sudo is needed, pipe password:
-sshpass -p 'PASS' ssh <user>@<nas-host> "echo 'PASS' | sudo -S <command>"
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> "cat > /path/file" < localfile
 
 # Image updates need pull + recreate (restart keeps old image):
 docker compose -f docker-compose.arr-stack.yml pull <service>
