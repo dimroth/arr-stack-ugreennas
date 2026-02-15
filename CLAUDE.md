@@ -330,6 +330,8 @@ ssh <user>@<nas-host> "cat /mnt/arr-backup/arr-stack-backup-*.tar.gz" > backups/
 
 ## Uptime Kuma SQLite
 
+**Networking:** Uptime Kuma uses `extra_hosts` in `docker-compose.utilities.yml` to map `.lan` domains to Traefik's bridge IP (172.20.0.2). This is required because `.lan` domains resolve to Traefik's macvlan IP, which is unreachable from the Docker bridge network. When adding a new `.lan` service, add its `extra_hosts` entry too.
+
 **Query monitors:**
 ```bash
 docker exec uptime-kuma sqlite3 /app/data/kuma.db "SELECT id, name, url FROM monitor"
@@ -341,18 +343,30 @@ docker exec uptime-kuma sqlite3 /app/data/kuma.db "UPDATE monitor SET url='http:
 docker restart uptime-kuma
 ```
 
-**Add monitors:**
+**Add HTTP monitors:**
 
 **CRITICAL: Always include `user_id=1` - monitors without it won't appear in the UI!**
 
 ```bash
-docker exec uptime-kuma sqlite3 /app/data/kuma.db "INSERT INTO monitor (name, type, url, interval, accepted_statuscodes_json, ignore_tls, active, maxretries, user_id) VALUES ('Service Name', 'http', 'http://url', 60, '[\"200-299\"]', 0, 1, 3, 1);"
+docker exec uptime-kuma sqlite3 /app/data/kuma.db "INSERT INTO monitor (name, type, url, interval, accepted_statuscodes_json, ignore_tls, active, maxretries, user_id) VALUES ('Service Name', 'http', 'http://service.lan/', 60, '[\"200-299\"]', 0, 1, 3, 1);"
 docker restart uptime-kuma
 ```
 
-For HTTPS with self-signed cert or 401 auth page: `ignore_tls=1`, `accepted_statuscodes_json='[\"200-299\",\"401\"]'`
+**Add Docker container monitors** (for services without a web UI):
 
-**Note:** Services using `network_mode: service:gluetun` (qBittorrent, Sonarr, etc.) should use Gluetun's static IP (`172.20.0.3`) in Uptime Kuma, not the hostname.
+```bash
+docker exec uptime-kuma sqlite3 /app/data/kuma.db "INSERT INTO monitor (name, type, docker_container, docker_host, interval, accepted_statuscodes_json, active, maxretries, user_id) VALUES ('Container Name', 'docker', 'container-name', 1, '[\"200-299\"]', 1, 3, 1);"
+docker restart uptime-kuma
+```
+
+`docker_host=1` references the pre-configured local Docker socket. The `docker_container` column holds the container name (NOT the `url` column).
+
+**Monitor URL guidelines:**
+- Use `.lan` URLs for services with Traefik routes (clickable in the dashboard)
+- Use `/ping` endpoint for Sonarr/Radarr/Prowlarr (returns 200 without auth, e.g. `http://sonarr.lan/ping`)
+- Use direct IPs for services without `.lan` routes (e.g. FlareSolverr: `http://172.20.0.10:8191/`)
+- For auth-protected endpoints: `accepted_statuscodes_json='[\"200-299\",\"401\"]'`
+- For HTTPS with self-signed cert: `ignore_tls=1`
 
 ## Bash Script Gotchas
 
