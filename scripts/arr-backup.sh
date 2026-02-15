@@ -28,7 +28,7 @@ tar -czf "$BACKUP_DIR/$DATE/configs.tar.gz" -C "$SOURCE_DIR" \
 
 # Backup app data (Docker volumes with arr-stack_ prefix)
 # Stop services briefly for consistent backup
-docker compose -f "$SOURCE_DIR/docker-compose.arr-stack.yml" stop sonarr radarr prowlarr bazarr jellyseerr 2>/dev/null
+docker compose -f "$SOURCE_DIR/docker-compose.arr-stack.yml" stop sonarr radarr prowlarr bazarr seerr 2>/dev/null
 
 # Backup named volumes (with project prefix)
 for vol in sonarr-config radarr-config prowlarr-config qbittorrent-config jellyfin-config jellyfin-cache; do
@@ -36,14 +36,14 @@ for vol in sonarr-config radarr-config prowlarr-config qbittorrent-config jellyf
 done
 
 # Backup bind mount directories
-for dir in jellyseerr/config bazarr/config uptime-kuma pihole-etc-pihole pihole-etc-dnsmasq; do
+for dir in seerr/config bazarr/config uptime-kuma pihole-etc-pihole pihole-etc-dnsmasq; do
     if [ -d "$SOURCE_DIR/$dir" ]; then
         tar -czf "$BACKUP_DIR/$DATE/$(echo $dir | tr '/' '-').tar.gz" -C "$SOURCE_DIR" "$dir" 2>/dev/null
     fi
 done
 
 # Restart services
-docker compose -f "$SOURCE_DIR/docker-compose.arr-stack.yml" start sonarr radarr prowlarr bazarr jellyseerr 2>/dev/null
+docker compose -f "$SOURCE_DIR/docker-compose.arr-stack.yml" start sonarr radarr prowlarr bazarr seerr 2>/dev/null
 
 # Delete backups older than KEEP_DAYS
 find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +$KEEP_DAYS -exec rm -rf {} \;

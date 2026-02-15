@@ -76,7 +76,7 @@ Here's what you'll need to get started.
 
 | Component | What it does | Which setup? |
 |-----------|--------------|--------------|
-| **Jellyseerr** | Request portal - users request shows/movies here | Core |
+| **Seerr** | Request portal - users request shows/movies here | Core |
 | **Jellyfin** | Media player - like Netflix but for your own content | Core |
 | **Sonarr** | TV show manager - searches for episodes, sends to download client | Core |
 | **Radarr** | Movie manager - searches for movies, sends to download client | Core |
@@ -729,7 +729,7 @@ Manages torrent/Usenet indexers and syncs them to Sonarr/Radarr.
 6. **Connect to Radarr:** Same process with `http://localhost:7878`
 7. **Sync:** Settings → Apps → Sync App Indexers
 
-### 4.7 Jellyseerr (Request Manager)
+### 4.7 Seerr (Request Manager)
 
 Lets users browse and request movies/TV shows.
 
@@ -842,7 +842,7 @@ Compare the IPs — qBittorrent should show your VPN's IP, not your home IP.
 **Congratulations!** Your media stack is working. You can now:
 - Access services via `NAS_IP:port` (e.g., `192.168.1.50:8096` for Jellyfin)
 - Add content via Sonarr (TV) and Radarr (movies)
-- Request content via Jellyseerr
+- Request content via Seerr
 
 **What's next?**
 - **Stop here** if IP:port access is fine for you
@@ -954,7 +954,7 @@ Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues
 
 ## + remote access — Optional
 
-Watch and request media from anywhere via `jellyfin.yourdomain.com` and `jellyseerr.yourdomain.com`.
+Watch and request media from anywhere via `jellyfin.yourdomain.com` and `seerr.yourdomain.com`.
 
 **Requirements:**
 - Buy a new, external domain name (~$10/year) — [Cloudflare Registrar](https://www.cloudflare.com/products/registrar/) is simplest
@@ -1027,8 +1027,8 @@ Edit `traefik/dynamic/vpn-services.yml` and replace the Host rules:
 # Replace yourdomain.com with your actual domain
 jellyfin:
   rule: "Host(`jellyfin.yourdomain.com`)"  # ← your domain
-jellyseerr:
-  rule: "Host(`jellyseerr.yourdomain.com`)"  # ← your domain
+seerr:
+  rule: "Host(`seerr.yourdomain.com`)"  # ← your domain
 ```
 
 > **Note:** The `.yml` files are gitignored. Your customized configs won't be overwritten when you `git pull` updates.
@@ -1100,13 +1100,13 @@ From your phone on cellular data (not WiFi):
 ## ✅ + remote access Complete!
 
 **Congratulations!** You now have:
-- Jellyfin and Jellyseerr accessible from anywhere via `yourdomain.com`
+- Jellyfin and Seerr accessible from anywhere via `yourdomain.com`
 - HTTPS encryption for all external traffic
 - No ports exposed on your router
 
 **You're done!** The sections below (Backup, Utilities) are optional but recommended.
 
-> **Need full network access remotely?** Cloudflare Tunnel only exposes HTTP services (Jellyfin, Jellyseerr). Continue to [+ Tailscale](#-tailscale-full-remote-lan-access--optional) for full network-level access to admin UIs (Sonarr, Radarr, etc.) and `.lan` domains from outside your home.
+> **Need full network access remotely?** Cloudflare Tunnel only exposes HTTP services (Jellyfin, Seerr). Continue to [+ Tailscale](#-tailscale-full-remote-lan-access--optional) for full network-level access to admin UIs (Sonarr, Radarr, etc.) and `.lan` domains from outside your home.
 
 **Other docs:** [Upgrading](UPGRADING.md) · [Home Assistant Integration](HOME-ASSISTANT.md) · [Quick Reference](REFERENCE.md)
 
@@ -1116,18 +1116,18 @@ Issues? [Report on GitHub](https://github.com/Pharkie/arr-stack-ugreennas/issues
 
 ## + Tailscale (full remote LAN access) — Optional
 
-Access **all** services and `.lan` domains from outside your home — not just Jellyfin and Jellyseerr. Tailscale creates a mesh VPN that gives your remote devices direct network-level access to your LAN.
+Access **all** services and `.lan` domains from outside your home — not just Jellyfin and Seerr. Tailscale creates a mesh VPN that gives your remote devices direct network-level access to your LAN.
 
 **Cloudflare Tunnel vs Tailscale:**
 
 | | Cloudflare Tunnel | Tailscale |
 |---|---|---|
 | **Access type** | HTTP only (web apps) | Full network (any protocol) |
-| **What you can reach** | Jellyfin, Jellyseerr | Everything: Sonarr, Radarr, Pi-hole, `.lan` domains, etc. |
+| **What you can reach** | Jellyfin, Seerr | Everything: Sonarr, Radarr, Pi-hole, `.lan` domains, etc. |
 | **Who can access** | Anyone with the URL | Only your Tailscale-authenticated devices |
 | **Setup** | Domain + Cloudflare account | Tailscale account (free) |
 
-Both can coexist — Cloudflare Tunnel for sharing Jellyfin/Jellyseerr with others, Tailscale for your own admin access.
+Both can coexist — Cloudflare Tunnel for sharing Jellyfin/Seerr with others, Tailscale for your own admin access.
 
 ### Prerequisites
 

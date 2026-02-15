@@ -28,7 +28,7 @@ The backup script (`scripts/backup-volumes.sh`) backs up **essential configs onl
 | bazarr-config | ~2MB | Subtitle provider credentials |
 | uptime-kuma-data | ~14MB | Monitor configurations |
 | pihole-etc-dnsmasq | ~4KB | Custom DNS settings |
-| jellyseerr-config | ~5MB | User accounts, requests |
+| seerr-config | ~5MB | User accounts, requests |
 
 **Total: ~60MB uncompressed, ~13MB compressed**
 
@@ -121,15 +121,15 @@ scp user@nas:/tmp/arr-stack-backup-*.tar.gz ./backup.tar.gz
 ### Single Volume Restore
 
 ```bash
-# On NAS via SSH - example: restore jellyseerr config
-docker compose -f docker-compose.arr-stack.yml stop jellyseerr
+# On NAS via SSH - example: restore seerr config
+docker compose -f docker-compose.arr-stack.yml stop seerr
 
 docker run --rm \
-  -v ./backup/jellyseerr-config:/source:ro \
-  -v arr-stack_jellyseerr-config:/dest \
+  -v ./backup/seerr-config:/source:ro \
+  -v arr-stack_seerr-config:/dest \
   alpine cp -a /source/. /dest/
 
-docker compose -f docker-compose.arr-stack.yml start jellyseerr
+docker compose -f docker-compose.arr-stack.yml start seerr
 ```
 
 ---
@@ -161,7 +161,7 @@ If auto-detection fails, use `--prefix`:
 ### Jellyfin vs Plex
 
 The script auto-detects which variant you're using and backs up the appropriate request manager:
-- Jellyfin stack: `jellyseerr-config`
+- Jellyfin stack: `seerr-config`
 - Plex stack: `overseerr-config`
 
 ---

@@ -28,7 +28,7 @@ chmod 600 ~/.ssh/.nas_pass
 
 ## What This Project Is
 
-A Docker Compose media automation stack **that runs on a NAS**, not on this local machine. Users request TV shows/movies via Jellyseerr → Sonarr/Radarr search for them → qBittorrent/SABnzbd download them (through VPN) → media appears in Jellyfin ready to watch.
+A Docker Compose media automation stack **that runs on a NAS**, not on this local machine. Users request TV shows/movies via Seerr → Sonarr/Radarr search for them → qBittorrent/SABnzbd download them (through VPN) → media appears in Jellyfin ready to watch.
 
 **⚠️ IMPORTANT: This repo is the SOURCE CODE. The stack RUNS on a remote NAS.**
 - Local machine (where Claude Code runs): Development, editing config files
@@ -38,7 +38,7 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 
 **Key services:**
 - **Jellyfin** - Media server (like Netflix for your own content)
-- **Jellyseerr** - Request portal for users to ask for shows/movies
+- **Seerr** - Request portal for users to ask for shows/movies
 - **Sonarr/Radarr** - TV/Movie managers that find and organize downloads
 - **Prowlarr** - Indexer manager (finds download sources)
 - **qBittorrent** - Torrent client (downloads via VPN)
@@ -51,6 +51,8 @@ A Docker Compose media automation stack **that runs on a NAS**, not on this loca
 - **Recyclarr** - TRaSH Guide sync (auto-applies quality profiles/custom formats to Sonarr/Radarr)
 
 **Networking:** Services behind VPN share Gluetun's network (`network_mode: service:gluetun`). They reach each other via `localhost`. Services outside the VPN reach them via `gluetun` hostname.
+
+> **Note:** Jellyseerr was renamed to Seerr upstream. Old `jellyseerr.lan` / `jellyseerr.yourdomain.com` URLs redirect to `seerr.lan` / `seerr.yourdomain.com`.
 
 ---
 
@@ -142,7 +144,7 @@ VPN services (Sonarr, Radarr, Prowlarr, qBittorrent, SABnzbd) use `network_mode:
 | Route | Use |
 |-------|-----|
 | VPN → VPN (Sonarr/Radarr → qBittorrent) | `localhost` |
-| Non-VPN → VPN (Jellyseerr → Sonarr) | `gluetun` |
+| Non-VPN → VPN (Seerr → Sonarr) | `gluetun` |
 | Any → Non-VPN (Any → Jellyfin) | container name |
 
 **Download client config**: Sonarr/Radarr → qBittorrent: Host=`localhost`, Port=`8085`. SABnzbd: Host=`localhost`, Port=`8080`.
@@ -170,10 +172,10 @@ Routes defined in `traefik/dynamic/vpn-services.yml`, NOT Docker labels.
 Docker labels are minimal (`traefik.enable=true`, `traefik.docker.network=arr-stack`). To add routes, edit `vpn-services.yml`.
 
 **Remote vs Local-only services:**
-- **Remote** (via Cloudflare Tunnel): Jellyfin, Jellyseerr, Traefik dashboard
+- **Remote** (via Cloudflare Tunnel): Jellyfin, Seerr, Traefik dashboard
 - **Local-only** (NAS_IP:PORT or via VPN): Sonarr, Radarr, Prowlarr, qBittorrent, Bazarr, Pi-hole, Uptime Kuma, duc
 
-Why local-only? These services default to "no login from local network". Cloudflare Tunnel traffic appears local, bypassing auth. Use Jellyseerr for remote media requests.
+Why local-only? These services default to "no login from local network". Cloudflare Tunnel traffic appears local, bypassing auth. Use Seerr for remote media requests.
 
 ## Cloudflare Tunnel
 
@@ -322,7 +324,7 @@ ssh <user>@<nas-host> "cat /mnt/arr-backup/arr-stack-backup-*.tar.gz" > backups/
 
 ### What's Backed Up
 
-**Included** (~13MB compressed): gluetun, qbittorrent, prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, jellyseerr, sabnzbd configs.
+**Included** (~13MB compressed): gluetun, qbittorrent, prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, seerr, sabnzbd configs.
 
 **Excluded** (regeneratable): jellyfin-config (407MB), sonarr (43MB), radarr (110MB), pihole blocklists (138MB).
 

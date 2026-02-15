@@ -7,7 +7,7 @@
 # 1. Copy traefik/dynamic/vpn-services-plex.yml to vpn-services.yml
 # 2. Update scripts/arr-backup.sh if using backups:
 #    - Replace jellyfin-config/jellyfin-cache with plex-config
-#    - Replace jellyseerr with overseerr
+#    - Replace seerr with overseerr
 # 3. Add PLEX_CLAIM to .env (see .env.example) - only needed on first run
 ##############################################################################
 

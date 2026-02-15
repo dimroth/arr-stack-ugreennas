@@ -17,17 +17,23 @@ http:
       entryPoints: [web]
       service: jellyfin-lan
 
+    seerr-lan:
+      rule: "Host(`seerr.lan`)"
+      entryPoints: [web]
+      service: seerr-lan
+
+    # Backward-compat redirects (jellyseerr -> seerr)
     jellyseerr-lan:
       rule: "Host(`jellyseerr.lan`)"
       entryPoints: [web]
-      service: jellyseerr-lan
+      middlewares: [jellyseerr-redirect]
+      service: seerr-lan
 
-    # Typo redirects (jellyseer -> jellyseerr)
     jellyseer-lan:
       rule: "Host(`jellyseer.lan`)"
       entryPoints: [web]
-      middlewares: [jellyseer-redirect]
-      service: jellyseerr-lan
+      middlewares: [jellyseerr-redirect]
+      service: seerr-lan
 
     # === *arr Stack (VPN-protected via Gluetun) ===
     sonarr-lan:
@@ -106,10 +112,10 @@ http:
       service: immich-lan
 
   middlewares:
-    jellyseer-redirect:
+    jellyseerr-redirect:
       redirectRegex:
-        regex: "^http://jellyseer[.]lan(.*)"
-        replacement: "http://jellyseerr.lan${1}"
+        regex: "^http://jellyseerr?[.]lan(.*)"
+        replacement: "http://seerr.lan${1}"
         permanent: true
 
   services:
@@ -119,7 +125,7 @@ http:
         servers:
           - url: "http://172.20.0.4:8096"
 
-    jellyseerr-lan:
+    seerr-lan:
       loadBalancer:
         servers:
           - url: "http://172.20.0.8:5055"

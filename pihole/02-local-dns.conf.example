@@ -10,6 +10,7 @@
 
 # Media services
 address=/jellyfin.lan/TRAEFIK_LAN_IP
+address=/seerr.lan/TRAEFIK_LAN_IP
 address=/jellyseerr.lan/TRAEFIK_LAN_IP
 address=/jellyseer.lan/TRAEFIK_LAN_IP
 

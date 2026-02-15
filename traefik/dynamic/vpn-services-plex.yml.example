@@ -1,5 +1,5 @@
 # Plex variant - copy this to vpn-services.yml if using docker-compose.plex-arr-stack.yml
-# Changes from Jellyfin version: jellyfin→plex (port 32400), jellyseerr→overseerr
+# Changes from Jellyfin version: jellyfin→plex (port 32400), seerr→overseerr
 #
 # REMOTE ACCESS (via Cloudflare Tunnel):
 # - Plex, Overseerr - user-facing services

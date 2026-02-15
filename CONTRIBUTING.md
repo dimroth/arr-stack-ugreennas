@@ -51,7 +51,7 @@ Internet → Cloudflare Tunnel (or Router Port Forward 80→8080, 443→8443)
                             ▼
            Traefik (listening on 8080/8443 on NAS)
                             │
-                            ├─► Jellyfin, Jellyseerr, Bazarr (Direct)
+                            ├─► Jellyfin, Seerr, Bazarr (Direct)
                             │
                             └─► Gluetun (VPN Gateway)
                                     │
