@@ -67,8 +67,22 @@ services:
       - "3001:3001"  # Local network access only
     environment:
       - TZ=${TZ}
-    dns:
-      - 172.20.0.5  # Pi-hole, so .lan domains resolve
+    extra_hosts:  # Route .lan to Traefik bridge IP (macvlan IP unreachable from bridge)
+      - "sonarr.lan:172.20.0.2"
+      - "radarr.lan:172.20.0.2"
+      - "prowlarr.lan:172.20.0.2"
+      - "qbit.lan:172.20.0.2"
+      - "sabnzbd.lan:172.20.0.2"
+      - "jellyfin.lan:172.20.0.2"
+      - "seerr.lan:172.20.0.2"
+      - "bazarr.lan:172.20.0.2"
+      - "pihole.lan:172.20.0.2"
+      - "traefik.lan:172.20.0.2"
+      - "beszel.lan:172.20.0.2"
+      - "duc.lan:172.20.0.2"
+      - "teslamate.lan:172.20.0.2"
+      - "grafana-tesla.lan:172.20.0.2"
+      - "immich.lan:172.20.0.2"
     networks:
       arr-stack:
         ipv4_address: 172.20.0.13  # For monitoring other containers
