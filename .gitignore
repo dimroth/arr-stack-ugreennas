@@ -98,6 +98,12 @@ venv/
 env/
 ENV/
 
+# BMAD Framework (installed tooling, not project code)
+_bmad/
+_bmad-output/
+.claude/commands/bmad*
+.cursor/commands/bmad*
+
 # Personal Notes & Local Docs
 notes.md
 TODO.md
