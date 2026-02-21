@@ -83,6 +83,7 @@ services:
       - "teslamate.lan:172.20.0.2"
       - "grafana-tesla.lan:172.20.0.2"
       - "immich.lan:172.20.0.2"
+      - "vaultwarden.lan:172.20.0.2"
     networks:
       arr-stack:
         ipv4_address: 172.20.0.13  # For monitoring other containers

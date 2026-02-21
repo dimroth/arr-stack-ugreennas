@@ -22,6 +22,14 @@ http:
         - web
       service: seerr
 
+    vaultwarden:
+      rule: "Host(`vaultwarden.yourdomain.com`)"
+      entryPoints:
+        - web
+      middlewares:
+        - security-headers@file
+      service: vaultwarden
+
     # Optional: Redirect old jellyseerr domain (backward compat)
     jellyseerr-redirect:
       rule: "Host(`jellyseerr.yourdomain.com`) || Host(`jellyseer.yourdomain.com`)"
@@ -48,3 +56,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://172.20.0.8:5055"
+
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://172.20.0.24:80"

@@ -181,6 +181,7 @@ VOLUME_SUFFIXES=(
   pihole-etc-dnsmasq      # Custom DNS settings (small)
   tailscale-state         # Tailscale node identity and keys
   recyclarr-config        # TRaSH Guide sync cache and state
+  vaultwarden-data        # Vault database (SQLite), attachments, config
 )
 
 # Request manager - detect which variant is in use (Jellyfin or Plex)

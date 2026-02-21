@@ -32,6 +32,7 @@ volumes:
   immich-redis:
   immich-ml-cache:
   recyclarr-config:
+  vaultwarden-data:
 
 #########################
 # Networks              #
@@ -689,3 +690,44 @@ services:
         ipv4_address: 172.20.0.22
     restart: always
     logging: *default-logging
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # VAULTWARDEN - Self-hosted Bitwarden-compatible password manager.
+  # Local: http://vaultwarden.lan  |  Remote: https://vaultwarden.yourdomain.com
+  # ═══════════════════════════════════════════════════════════════════════════
+  vaultwarden:
+    image: vaultwarden/server:1.35.3
+    container_name: vaultwarden
+    environment:
+      - TZ=${TZ}
+      # IMPORTANT: DOMAIN env var in .env must be a bare domain (no https:// prefix)
+      - DOMAIN=https://vaultwarden.${DOMAIN}
+      # Bootstrap: temporarily set to true, create your account, then set back to false
+      # and recreate: docker compose -f docker-compose.arr-stack.yml up -d vaultwarden
+      - SIGNUPS_ALLOWED=false
+      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+      - SMTP_HOST=${VAULTWARDEN_SMTP_HOST}
+      - SMTP_PORT=${VAULTWARDEN_SMTP_PORT}
+      - SMTP_SECURITY=starttls
+      - SMTP_FROM=${VAULTWARDEN_SMTP_FROM}
+      - SMTP_FROM_NAME=${VAULTWARDEN_SMTP_FROM_NAME}
+      - SMTP_USERNAME=${VAULTWARDEN_SMTP_USERNAME}
+      - SMTP_PASSWORD=${VAULTWARDEN_SMTP_PASSWORD}
+      - PUSH_ENABLED=true
+      - PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_ID}
+      - PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_KEY}
+    volumes:
+      - vaultwarden-data:/data
+    networks:
+      arr-stack:
+        ipv4_address: 172.20.0.24
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+    restart: always
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/alive"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s

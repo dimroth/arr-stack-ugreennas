@@ -111,6 +111,12 @@ http:
       entryPoints: [web]
       service: immich-lan
 
+    # === Security ===
+    vaultwarden-lan:
+      rule: "Host(`vaultwarden.lan`)"
+      entryPoints: [web]
+      service: vaultwarden-lan
+
   middlewares:
     jellyseerr-redirect:
       redirectRegex:
@@ -200,3 +206,9 @@ http:
       loadBalancer:
         servers:
           - url: "http://172.20.0.18:2283"
+
+    # === Security ===
+    vaultwarden-lan:
+      loadBalancer:
+        servers:
+          - url: "http://172.20.0.24:80"
