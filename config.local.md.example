@@ -33,7 +33,6 @@ Copy this file to `config.local.md` and fill in your values.
 | WireGuard | 172.20.0.6 |
 | Seerr | 172.20.0.8 |
 | Bazarr | 172.20.0.9 |
-| FlareSolverr | 172.20.0.10 |
 | Cloudflared | 172.20.0.12 |
 | Uptime Kuma | 172.20.0.13 |
 | duc | 172.20.0.14 |

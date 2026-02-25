@@ -49,7 +49,7 @@
 | Pi-hole | 172.20.0.5 | 8081 | DNS + DHCP (`/admin`), also on macvlan (`PIHOLE_LAN_IP`) |
 | Seerr | 172.20.0.8 | 5055 | Request management |
 | Bazarr | 172.20.0.9 | 6767 | Subtitles |
-| FlareSolverr | 172.20.0.10 | 8191 | Cloudflare bypass |
+| ↳ FlareSolverr | (via Gluetun) | 8191 | Cloudflare bypass |
 | Tailscale | 172.20.0.16 | — | Mesh VPN subnet router (also on macvlan: `TAILSCALE_LAN_IP`) |
 | Immich | 172.20.0.18 | 2283 | Photo/video server (4 containers total) |
 | Immich ML | 172.20.0.19 | 3003 | Machine learning (facial recognition, smart search) |
@@ -87,7 +87,7 @@
 | Radarr | qBittorrent | `localhost:8085` | Same network stack |
 | Prowlarr | Sonarr | `localhost:8989` | Same network stack |
 | Prowlarr | Radarr | `localhost:7878` | Same network stack |
-| Prowlarr | FlareSolverr | `http://172.20.0.10:8191` | Direct IP (outside gluetun) |
+| Prowlarr | FlareSolverr | `localhost:8191` | Same network stack (shares Gluetun) |
 | Seerr | Sonarr | `gluetun:8989` | Must go through gluetun |
 | Seerr | Radarr | `gluetun:7878` | Must go through gluetun |
 | Seerr | Jellyfin | `jellyfin:8096` | Both have own IPs |
@@ -142,7 +142,8 @@ Services start in dependency order (handled automatically by `depends_on`):
 2. **Gluetun** → VPN connected (uses Pi-hole for internal DNS)
 3. **Sonarr, Radarr, Prowlarr, qBittorrent, SABnzbd** → VPN-protected services
 4. **Seerr, Bazarr** → Connect to Sonarr/Radarr via Gluetun
-5. **Jellyfin, WireGuard, FlareSolverr** → Independent, start anytime
+5. **FlareSolverr** → Cloudflare bypass (via Gluetun, shares VPN with Prowlarr)
+6. **Jellyfin, WireGuard** → Independent, start anytime
 
 ## Compose Files
 

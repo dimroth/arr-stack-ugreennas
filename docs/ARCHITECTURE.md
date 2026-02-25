@@ -37,7 +37,7 @@ When someone requests a movie or TV show, here's what happens:
                               ┌─────────────────────────────────────────┐
                               │            GLUETUN (VPN)                │
                               │                                         │
-Internet ◄───VPN Tunnel───────│  qBittorrent  Sonarr  Radarr  Prowlarr  │
+Internet ◄───VPN Tunnel───────│  qBit  Sonarr  Radarr  Prowlarr  Flare  │
                               │       ▲         ▲       ▲        ▲      │
                               │       │         │       │        │      │
                               │       └─────────┴───────┴────────┘      │
@@ -90,7 +90,6 @@ arr-stack network (172.20.0.0/24)
 │ 172.20.0.4   │ Jellyfin     │ Media server                   │ Core             │
 │ 172.20.0.8   │ Seerr        │ Request portal                 │ Core             │
 │ 172.20.0.9   │ Bazarr       │ Subtitles                      │ Core             │
-│ 172.20.0.10  │ FlareSolverr │ Cloudflare bypass              │ Core (optional)  │
 │ 172.20.0.5   │ Pi-hole      │ DNS + DHCP server (+ macvlan)   │ Core             │
 │ 172.20.0.2   │ Traefik      │ Reverse proxy                  │ + local DNS      │
 │ 172.20.0.12  │ Cloudflared  │ Tunnel to Cloudflare           │ + remote access  │

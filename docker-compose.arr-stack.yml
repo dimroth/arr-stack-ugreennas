@@ -98,6 +98,7 @@ services:
       - "9696:9696"   # Prowlarr
       - "8085:8085"   # qBittorrent
       - "8082:8080"   # SABnzbd
+      - "8191:8191"   # FlareSolverr
     networks:
       arr-stack:
         ipv4_address: 172.20.0.3
@@ -542,17 +543,19 @@ services:
 
   # ═══════════════════════════════════════════════════════════════════════════
   # FLARESOLVERR - Cloudflare bypass. Helps Prowlarr access protected sites.
-  # No web UI. Used internally by Prowlarr at 172.20.0.10:8191
+  # Runs behind Gluetun VPN so solved cookies match Prowlarr's exit IP.
+  # No web UI. Used internally by Prowlarr at localhost:8191
   # ═══════════════════════════════════════════════════════════════════════════
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:v3.4.6
     container_name: flaresolverr
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
-    networks:
-      arr-stack:
-        ipv4_address: 172.20.0.10
     labels:
       - deunhealth.restart.on.unhealthy=true
     restart: always
