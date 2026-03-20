@@ -143,7 +143,7 @@ services:
   # Access: beszel.lan | NAS_IP:8090 (LAN-only, use WireGuard for remote)
   # ═══════════════════════════════════════════════════════════════════════════
   beszel:
-    image: henrygd/beszel:0.18
+    image: henrygd/beszel:0.18.4
     container_name: beszel
     restart: always
     ports:
@@ -166,7 +166,7 @@ services:
       start_period: 30s
 
   beszel-agent:
-    image: henrygd/beszel-agent:0.18
+    image: henrygd/beszel-agent:0.18.4
     container_name: beszel-agent
     restart: always
     network_mode: host
