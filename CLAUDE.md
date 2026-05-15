@@ -137,6 +137,31 @@ docker compose -f docker-compose.arr-stack.yml pull <service>
 docker compose -f docker-compose.arr-stack.yml up -d <service>
 ```
 
+## UGOS Filesystem Quirks
+
+### ⚠️ `ls -la` lies about permissions — always verify with `stat`
+
+On this UGOS NAS, `ls -la` frequently reports inflated permission strings (e.g. `-rwxrwxrwx+`, `drwxrwxrwx+`) on files and directories whose actual mode is restrictive (e.g. `0700`). The trailing `+` does NOT indicate meaningful POSIX ACL entries — `getfacl` shows only the standard mode triplet — but `ls` still prints the wrong bits.
+
+**Symptom:** A container reports `permission denied` reading a bind-mounted file even though `ls -la` shows the file as world-readable.
+
+**Diagnosis:** Use `stat` (as root) to see the real octal mode:
+```bash
+sshpass -f ~/.ssh/.nas_pass ssh <user>@<nas-host> 'cat /tmp/.sudopw | sudo -S stat <path>'
+# Look at the `Access: (0NNN/...)` line — that's the truth.
+# Check both the file AND every parent dir up to the volume root.
+```
+
+**Typical fix:**
+```bash
+# Parent dir needs o+x for traversal
+sudo chmod 755 /volume2/docker/arr-stack/<service>/
+# File needs o+r (or g+r if container user is in the file's group)
+sudo chmod 644 /volume2/docker/arr-stack/<service>/<file>
+```
+
+**Why this happens:** On UGOS, ownership changes (and possibly Docker volume creation) silently strip the broader mode bits to `0700` while leaving the `ls`-displayed string unchanged. Hit this in May 2026 when cloudflared (running as UID 65532) couldn't read `/home/nonroot/.cloudflared/config.yml` despite `ls -la` reporting `-rwxrwxrwx+` on both the file and its parent — `stat` revealed the parent dir was `0700` and the file had also been reset to `0700` after a chown. Cause of every "Error 1033" on Cloudflare-exposed services.
+
 ## Service Networking
 
 VPN services (Sonarr, Radarr, Prowlarr, qBittorrent, SABnzbd) use `network_mode: service:gluetun`.
