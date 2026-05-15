@@ -117,7 +117,7 @@ services:
   # Access: qbit.lan | qbit.yourdomain.com | NAS_IP:8085
   # ═══════════════════════════════════════════════════════════════════════════
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:5.1.4
+    image: lscr.io/linuxserver/qbittorrent:5.2.0
     container_name: qbittorrent
     network_mode: "service:gluetun"
     depends_on:
@@ -211,7 +211,7 @@ services:
   # Access: prowlarr.lan | prowlarr.yourdomain.com | NAS_IP:9696
   # ═══════════════════════════════════════════════════════════════════════════
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:2.3.0
+    image: lscr.io/linuxserver/prowlarr:2.3.5
     container_name: prowlarr
     network_mode: "service:gluetun"
     depends_on:
@@ -240,7 +240,7 @@ services:
   # Access: radarr.lan | radarr.yourdomain.com | NAS_IP:7878
   # ═══════════════════════════════════════════════════════════════════════════
   radarr:
-    image: lscr.io/linuxserver/radarr:6.0.4
+    image: lscr.io/linuxserver/radarr:6.1.1
     container_name: radarr
     network_mode: "service:gluetun"
     depends_on:
@@ -309,7 +309,7 @@ services:
   # For: Home Pro + Anywhere setups
   # ═══════════════════════════════════════════════════════════════════════════
   pihole:
-    image: pihole/pihole:2026.02.0
+    image: pihole/pihole:2026.05.0
     container_name: pihole
     # No port mappings needed - Pi-hole is accessed directly on its macvlan LAN IP
     # (Docker port mappings break when macvlan is attached due to NAT return routing)
@@ -701,7 +701,7 @@ services:
   # Local: http://vaultwarden.lan  |  Remote: https://vaultwarden.yourdomain.com
   # ═══════════════════════════════════════════════════════════════════════════
   vaultwarden:
-    image: vaultwarden/server:1.35.4
+    image: vaultwarden/server:1.36.0
     container_name: vaultwarden
     environment:
       - TZ=${TZ}
