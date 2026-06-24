@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- **Radarr 6.1.1 → 6.2.1**, **Jellyfin `10.11` → `10.11.11`** (pinned to the exact patch). Sonarr (`4.0.17`) and Seerr (`:latest` → v3.3.0) were already on their latest stable; pulled & recreated to refresh
+- **Jellyfin media libraries now read-write**: dropped the `:ro` flag on the movies/tv/kids/personal-videos bind mounts so media can be deleted from the Jellyfin UI. Enable per user under *Dashboard → Users → [user] → Allow media deletion* and select the libraries. ⚠️ Jellyfin runs as root, so deletions are real and permanent — including irreplaceable `personal-videos`
 - **Recyclarr v7 → v8** (pinned to `:8`): migrated `recyclarr/recyclarr.yml` to v8 schema. Removed deprecated `replace_existing_custom_formats: true` and removed `include: - template:` directives (official include templates were dropped upstream in v8). Replaced with inline guide-backed quality profiles (single `trash_id` per profile) and `custom_format_groups`. Each profile keeps `name:` matching the existing Sonarr/Radarr profile so v8 adopts (not duplicates) it on first sync
 - **TeslaMate v2.2.0 → v3.0.0** and **teslamate-grafana 12.1.1 → 12.4.0**: pulled & recreated. After the bump, do once in the TeslaMate Grafana UI: *Connections → Data sources → TeslaMate → Save & test* (fixes "No Data" regression in 12.4.0). Define at least one Geofence in the TeslaMate UI to avoid the geofence-filtered dashboards failing
 

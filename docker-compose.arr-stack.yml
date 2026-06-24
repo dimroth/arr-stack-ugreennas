@@ -240,7 +240,7 @@ services:
   # Access: radarr.lan | radarr.yourdomain.com | NAS_IP:7878
   # ═══════════════════════════════════════════════════════════════════════════
   radarr:
-    image: lscr.io/linuxserver/radarr:6.1.1
+    image: lscr.io/linuxserver/radarr:6.2.1
     container_name: radarr
     network_mode: "service:gluetun"
     depends_on:
@@ -271,7 +271,7 @@ services:
   # Access: jellyfin.lan | jellyfin.yourdomain.com | NAS_IP:8096
   # ═══════════════════════════════════════════════════════════════════════════
   jellyfin:
-    image: jellyfin/jellyfin:10.11
+    image: jellyfin/jellyfin:10.11.11
     container_name: jellyfin
     ports:
       - "8096:8096"     # Web UI
@@ -287,10 +287,13 @@ services:
     volumes:
       - jellyfin-config:/config
       - jellyfin-cache:/cache
-      - ${MEDIA_ROOT}/movies:/media/movies:ro
-      - ${MEDIA_ROOT}/tv:/media/tv:ro
-      - ${MEDIA_ROOT}/kids:/media/kids:ro
-      - ${MEDIA_ROOT}/personal-videos:/media/personal-videos:ro
+      # Read-write so media can be deleted from the Jellyfin UI (Dashboard →
+      # Users → [user] → "Allow media deletion" + pick libraries). Jellyfin
+      # runs as root, so it can remove files Sonarr/Radarr wrote as root.
+      - ${MEDIA_ROOT}/movies:/media/movies
+      - ${MEDIA_ROOT}/tv:/media/tv
+      - ${MEDIA_ROOT}/kids:/media/kids
+      - ${MEDIA_ROOT}/personal-videos:/media/personal-videos
     networks:
       arr-stack:
         ipv4_address: 172.20.0.4
