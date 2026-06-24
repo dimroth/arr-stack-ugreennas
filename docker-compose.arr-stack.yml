@@ -117,7 +117,7 @@ services:
   # Access: qbit.lan | qbit.yourdomain.com | NAS_IP:8085
   # ═══════════════════════════════════════════════════════════════════════════
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:5.2.0
+    image: lscr.io/linuxserver/qbittorrent:5.2.2
     container_name: qbittorrent
     network_mode: "service:gluetun"
     depends_on:

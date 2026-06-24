@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- **qBittorrent 5.2.0 → 5.2.2** (patch bump). Pulled & recreated alongside floating-tag refreshes of Seerr, Recyclarr (`:8`), Tailscale (`:latest`), and the Immich stack (server/ML on `:release`, redis `valkey:9-alpine`) — all already on their latest builds (Immich v2.7.5); Immich Postgres left pinned as Immich requires
 - **Radarr 6.1.1 → 6.2.1**, **Jellyfin `10.11` → `10.11.11`** (pinned to the exact patch). Sonarr (`4.0.17`) and Seerr (`:latest` → v3.3.0) were already on their latest stable; pulled & recreated to refresh
 - **Jellyfin media libraries now read-write**: dropped the `:ro` flag on the movies/tv/kids/personal-videos bind mounts so media can be deleted from the Jellyfin UI. Enable per user under *Dashboard → Users → [user] → Allow media deletion* and select the libraries. ⚠️ Jellyfin runs as root, so deletions are real and permanent — including irreplaceable `personal-videos`
 - **Recyclarr v7 → v8** (pinned to `:8`): migrated `recyclarr/recyclarr.yml` to v8 schema. Removed deprecated `replace_existing_custom_formats: true` and removed `include: - template:` directives (official include templates were dropped upstream in v8). Replaced with inline guide-backed quality profiles (single `trash_id` per profile) and `custom_format_groups`. Each profile keeps `name:` matching the existing Sonarr/Radarr profile so v8 adopts (not duplicates) it on first sync
