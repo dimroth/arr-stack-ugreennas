@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - **Recyclarr v7 → v8** (pinned to `:8`): migrated `recyclarr/recyclarr.yml` to v8 schema. Removed deprecated `replace_existing_custom_formats: true` and removed `include: - template:` directives (official include templates were dropped upstream in v8). Replaced with inline guide-backed quality profiles (single `trash_id` per profile) and `custom_format_groups`. Each profile keeps `name:` matching the existing Sonarr/Radarr profile so v8 adopts (not duplicates) it on first sync
 - **TeslaMate v2.2.0 → v3.0.0** and **teslamate-grafana 12.1.1 → 12.4.0**: pulled & recreated. After the bump, do once in the TeslaMate Grafana UI: *Connections → Data sources → TeslaMate → Save & test* (fixes "No Data" regression in 12.4.0). Define at least one Geofence in the TeslaMate UI to avoid the geofence-filtered dashboards failing
 
+### Fixed
+- **Bitwarden clients could not talk to Vaultwarden**: bumped **Vaultwarden 1.36.0 → 1.37.1**. Upstream 1.37.0 is *required* for Bitwarden clients 2026.7.0+ ("This update is required for support with clients with version 2026.7.0+"), so every auto-updated browser extension broke at once while the server itself stayed healthy (`/alive`, `/api/config`, `/identity/connect/token` all responded normally throughout). 1.37.0 also carries 8 medium-severity security fixes (SSRF via the icon endpoint, cross-organization cipher access, unauthenticated WebSocket flooding DoS, several organization authorization bypasses); 1.37.1 fixes organization invites
+
 ---
 
 ## [1.6.5] - 2026-02-25

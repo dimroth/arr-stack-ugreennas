@@ -704,7 +704,7 @@ services:
   # Local: http://vaultwarden.lan  |  Remote: https://vaultwarden.yourdomain.com
   # ═══════════════════════════════════════════════════════════════════════════
   vaultwarden:
-    image: vaultwarden/server:1.36.0
+    image: vaultwarden/server:1.37.1
     container_name: vaultwarden
     environment:
       - TZ=${TZ}
