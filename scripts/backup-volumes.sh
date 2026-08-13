@@ -5,12 +5,12 @@
 # Usage:
 #   ./scripts/backup-volumes.sh [OPTIONS] [BACKUP_DIR]
 #
-# Backs up Docker named volumes holding configuration, plus two databases that
-# cannot be safely captured as a file copy:
-#   - teslamate-db  via pg_dump (a live Postgres data dir copies torn)
-#   - immich        newest of Immich's own nightly dumps is copied in
-# Immich's photo/video originals are far too large for this archive; they go
-# off-site separately via scripts/backup-to-b2.sh.
+# Backs up Docker named volumes holding configuration, plus teslamate-db via
+# pg_dump (a live Postgres data dir copies torn and can refuse to start).
+#
+# Immich is checked but not copied: both its database dump and its photo
+# originals go off-site via scripts/backup-to-b2.sh, and duplicating the ~140MB
+# dump here would re-upload it twice nightly.
 #
 # Options:
 #   --tar           Create a .tar.gz archive (recommended for off-NAS transfer)
@@ -306,29 +306,29 @@ else
   SKIPPED=$((SKIPPED + 1))
 fi
 
-# Immich - copy the newest of Immich's own scheduled dumps.
-# The photo/video originals are far too large for this tarball; they go
-# off-site separately via scripts/backup-to-b2.sh.
+# Immich - checked, deliberately NOT copied.
+#
+# Immich writes its own dump here nightly and scripts/backup-to-b2.sh already
+# ships this whole directory to B2 alongside the photos the dump indexes.
+# Copying it in here as well meant uploading the same ~140MB twice every night,
+# since this tarball is re-uploaded in full each run. The dump is still backed
+# up off-site; it just travels with the library rather than with the configs.
+#
+# The freshness check stays. It is the only thing that would tell you Immich's
+# scheduled backup has been turned off, and a silently absent dump would mean
+# the photos are backed up with no catalogue to restore them into.
 IMMICH_BACKUP_DIR="/volume1/immich/upload/backups"
 if [ -d "$IMMICH_BACKUP_DIR" ]; then
-  echo -n "Copying newest Immich DB dump... "
+  echo -n "Checking Immich DB dump freshness... "
   NEWEST_IMMICH=$(ls -t "$IMMICH_BACKUP_DIR"/immich-db-backup-*.sql.gz 2>/dev/null | head -1)
   if [ -n "$NEWEST_IMMICH" ] && [ -s "$NEWEST_IMMICH" ]; then
-    # Warn if Immich's scheduled dump has stopped running
     DUMP_AGE_DAYS=$(( ( $(date +%s) - $(stat -c %Y "$NEWEST_IMMICH") ) / 86400 ))
-    mkdir -p "$BACKUP_DIR/immich-db"
-    if cp -p "$NEWEST_IMMICH" "$BACKUP_DIR/immich-db/" 2>/dev/null; then
-      SIZE=$(du -sh "$NEWEST_IMMICH" 2>/dev/null | cut -f1)
-      echo "OK ($SIZE, ${DUMP_AGE_DAYS}d old)"
-      BACKED_UP=$((BACKED_UP + 1))
-      if [ "$DUMP_AGE_DAYS" -gt 2 ]; then
-        echo "  WARNING: newest Immich dump is ${DUMP_AGE_DAYS} days old."
-        echo "           Check Administration -> Settings -> Backup Settings in Immich."
-        notify_failure "Immich DB dump is stale (${DUMP_AGE_DAYS} days old)"
-      fi
-    else
-      echo "FAILED (copy error)"
-      FAILED=$((FAILED + 1))
+    SIZE=$(du -sh "$NEWEST_IMMICH" 2>/dev/null | cut -f1)
+    echo "OK (${SIZE}, ${DUMP_AGE_DAYS}d old, backed up via B2 immich/backups/)"
+    if [ "$DUMP_AGE_DAYS" -gt 2 ]; then
+      echo "  WARNING: newest Immich dump is ${DUMP_AGE_DAYS} days old."
+      echo "           Check Administration -> Settings -> Backup Settings in Immich."
+      notify_failure "Immich DB dump is stale (${DUMP_AGE_DAYS} days old)"
     fi
   else
     echo "FAILED (no dumps found in $IMMICH_BACKUP_DIR)"
@@ -336,7 +336,7 @@ if [ -d "$IMMICH_BACKUP_DIR" ]; then
     FAILED=$((FAILED + 1))
   fi
 else
-  echo "Skipping Immich DB (${IMMICH_BACKUP_DIR} not found)"
+  echo "Skipping Immich DB check (${IMMICH_BACKUP_DIR} not found)"
   SKIPPED=$((SKIPPED + 1))
 fi
 

@@ -359,10 +359,15 @@ holds the key. Optional `B2_BWLIMIT` throttles the upload; `B2_MAX_DELETE`
 
 ### What's Backed Up
 
-**Local tarball** (~198MB, 7 days retained): gluetun, qbittorrent, sabnzbd,
+**Local tarball** (~59MB, 7 days retained): gluetun, qbittorrent, sabnzbd,
 prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, tailscale-state, recyclarr,
-vaultwarden, seerr configs, plus a `pg_dump` of teslamate-db and the newest
-Immich DB dump.
+vaultwarden, seerr configs, plus a `pg_dump` of teslamate-db.
+
+The Immich DB dump is **checked but not copied here**: it reaches B2 via
+`immich/backups/`, travelling with the photos it indexes. Including it in the
+tarball too meant re-uploading the same ~140MB twice nightly, since this archive
+is re-sent in full every run. The freshness check remains and warns if Immich's
+scheduled dump stops.
 
 **B2** (~170GB): everything above, plus `/volume1/immich/upload` minus `thumbs/`
 and `encoded-video/`.

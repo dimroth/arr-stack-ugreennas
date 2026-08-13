@@ -30,7 +30,7 @@ A Backblaze B2 bucket and an application key scoped to it. Set `B2_ACCOUNT_ID`,
 ## What Gets Backed Up
 
 `scripts/backup-volumes.sh` captures configuration that is hard to recreate,
-plus two databases that cannot be safely file-copied:
+plus the one database that cannot be safely file-copied:
 
 | Item | Size | Contents |
 |------|------|----------|
@@ -46,17 +46,23 @@ plus two databases that cannot be safely file-copied:
 | vaultwarden-data | ~13MB | Password vault (SQLite), attachments |
 | seerr-config | ~7MB | User accounts, requests |
 | teslamate-db | ~19MB | `pg_dump` of drive/charge history |
-| immich-db | ~140MB | Newest of Immich's own nightly dumps |
 
-**Total: ~198MB compressed**
+**Total: ~59MB compressed**
 
 > **Postgres is dumped, never copied.** A file copy of a live Postgres data
-> directory can be torn and refuse to start. `teslamate-db` goes through
-> `pg_dump`; Immich already writes its own nightly dump into
-> `/volume1/immich/upload/backups/` (14 retained) and the newest is copied in.
+> directory can be torn and refuse to start, so `teslamate-db` goes through
+> `pg_dump`.
 
-Immich's photo and video **originals are not in this tarball** - far too large.
-They go off-site directly via `scripts/backup-to-b2.sh`.
+**Immich is checked here, not copied.** It writes its own nightly dump into
+`/volume1/immich/upload/backups/` (14 retained), and `backup-to-b2.sh` ships
+that directory to B2 alongside the photos the dump indexes. Copying it into this
+tarball as well meant uploading the same ~140MB twice every night, because the
+archive is re-sent in full on every run. The script still checks the dump's age
+and warns past 2 days, since a silently disabled Immich backup would leave you
+with photos and no catalogue to restore them into.
+
+Immich's photo and video **originals are not in this tarball** either - far too
+large. They go off-site directly via `scripts/backup-to-b2.sh`.
 
 ## What's NOT Backed Up
 
@@ -76,7 +82,7 @@ Anything that regenerates automatically:
 
 > Excluding the last three matters more than it looks: the `.tar.gz` changes
 > completely every night, so every excluded byte is a byte re-uploaded to B2
-> daily. They cut the archive from ~466MB to ~198MB.
+> daily. They cut the archive from ~326MB to ~59MB.
 
 > **Note:** If you want to preserve watch history (Jellyfin) or avoid re-scanning, you can manually backup these volumes using the same docker command shown below.
 
@@ -105,12 +111,12 @@ Backing up qbittorrent-config... OK (42M)
 ...
 === Database dumps ===
 Dumping teslamate-db... OK (19M)
-Copying newest Immich DB dump... OK (140M, 0d old)
+Checking Immich DB dump freshness... OK (140M, 0d old, backed up via B2 immich/backups/)
 
-Summary: 13 backed up, 0 skipped, 0 failed
-Total size: 687M
+Summary: 12 backed up, 0 skipped, 0 failed
+Total size: 547M
 
-Created: .../arr-stack-backup-20260813.tar.gz (198M)
+Created: .../arr-stack-backup-20260813.tar.gz (59M)
 Moved to: /volume2/docker/arr-stack-backups/arr-stack-backup-20260813.tar.gz
 ```
 
@@ -156,9 +162,9 @@ ssh user@nas "cat /volume2/docker/arr-stack-backups/arr-stack-backup-*.tar.gz" >
    docker compose -f docker-compose.arr-stack.yml up -d
    ```
 
-> The loop above restores `teslamate-db/` and `immich-db/` as plain directories,
-> which does nothing useful. Those two are database dumps and must be replayed
-> through their server; see [Restoring Databases](#restoring-databases).
+> The loop above restores `teslamate-db/` as a plain directory, which does
+> nothing useful. It is a database dump and must be replayed through the server;
+> see [Restoring Databases](#restoring-databases).
 
 ### Single Volume Restore
 
@@ -182,11 +188,14 @@ docker exec -i teslamate-db pg_restore -U teslamate -d teslamate --clean --if-ex
 docker restart teslamate
 ```
 
-**Immich** (plain SQL, gzipped). Immich must be stopped so nothing writes while
+**Immich** (plain SQL, gzipped). The dump is not in the tarball; take it from
+`backups/` in the restored Immich tree, or straight from
+`b2:YOUR_BUCKET/immich/backups/`. Immich must be stopped so nothing writes while
 the schema is replaced:
 ```bash
 docker stop immich-server immich-machine-learning
-gunzip -c immich-db/immich-db-backup-*.sql.gz | docker exec -i immich-postgres psql -U postgres -d immich
+gunzip -c /volume1/immich/upload/backups/immich-db-backup-*.sql.gz | \
+  docker exec -i immich-postgres psql -U postgres -d immich
 docker start immich-server immich-machine-learning
 ```
 
@@ -409,9 +418,8 @@ The backup script runs docker containers which handle permissions internally. If
 - Check the volume prefix matches: `docker volume ls | grep config`
 
 ### Backup too large
-Expect ~198MB, of which ~140MB is the Immich database dump. If it is much larger,
-check that the tar exclusions still match reality: `recyclarr-config/resources`
-alone is ~293MB.
+Expect ~59MB. If it is much larger, check that the tar exclusions still match
+reality: `recyclarr-config/resources` alone is ~293MB.
 
 ### B2 sync uploads far more than expected
 Confirm nothing is staging inside `/volume2/docker/arr-stack-backups`. The stack
