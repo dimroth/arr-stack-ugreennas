@@ -5,9 +5,19 @@
 # Usage:
 #   ./scripts/backup-volumes.sh [OPTIONS] [BACKUP_DIR]
 #
+# Backs up Docker named volumes holding configuration, plus two databases that
+# cannot be safely captured as a file copy:
+#   - teslamate-db  via pg_dump (a live Postgres data dir copies torn)
+#   - immich        newest of Immich's own nightly dumps is copied in
+# Immich's photo/video originals are far too large for this archive; they go
+# off-site separately via scripts/backup-to-b2.sh.
+#
 # Options:
 #   --tar           Create a .tar.gz archive (recommended for off-NAS transfer)
 #   --prefix NAME   Volume prefix (default: auto-detect from running containers)
+#   --staging DIR   Where to assemble the copy before tarring (default: /tmp).
+#                   /tmp is on the eMMC boot device, so scheduled runs should
+#                   point this at a data volume.
 #   --usb DIR_NAME  Dynamically find USB device under /mnt/@usb/sd*/ containing DIR_NAME
 #                   (device letters change on reboot, so never hardcode e.g. /mnt/@usb/sdd1)
 #
@@ -101,6 +111,10 @@ CREATE_TAR=false
 BACKUP_DIR=""
 VOLUME_PREFIX=""
 USB_DIR_NAME=""
+# Where the uncompressed copy is assembled before tarring. Defaults to /tmp,
+# which on this NAS lives on the eMMC boot device; point it at a data volume
+# for scheduled runs to avoid several hundred MB of flash writes per night.
+STAGING_ROOT="/tmp"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -114,6 +128,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --usb)
       USB_DIR_NAME="$2"
+      shift 2
+      ;;
+    --staging)
+      STAGING_ROOT="$2"
       shift 2
       ;;
     *)
@@ -155,8 +173,17 @@ fi
 # - Always create backup in /tmp first (reliable space)
 # - If destination specified and different from /tmp, move tarball there after checking space
 FINAL_DEST="${BACKUP_DIR:-}"
-BACKUP_DIR="/tmp/arr-stack-backup-$(date +%Y%m%d)"
-mkdir -p "$BACKUP_DIR"
+BACKUP_DIR="${STAGING_ROOT}/arr-stack-backup-$(date +%Y%m%d)"
+mkdir -p "$BACKUP_DIR" || { notify_failure "Cannot create staging dir $BACKUP_DIR"; exit 1; }
+# A stale staging dir from an interrupted run would leave deleted files behind
+# in the tarball, so start clean.
+rm -rf "${BACKUP_DIR:?}"/* 2>/dev/null
+
+# Sweep staging trees abandoned by interrupted runs. Historically staging was
+# /tmp, which the NAS clears on reboot, so nothing ever cleaned up after itself.
+# On a persistent volume that leaks ~700MB a night.
+find "$STAGING_ROOT" -maxdepth 1 -name 'arr-stack-backup-*' -type d \
+  ! -path "$BACKUP_DIR" -mtime +1 -exec rm -rf {} + 2>/dev/null
 
 # Rotate old backups at final destination (keep 7 days)
 KEEP_DAYS=7
@@ -244,6 +271,75 @@ for suffix in "${VOLUME_SUFFIXES[@]}"; do
   fi
 done
 
+STEP="dumping databases"
+# ─────────────────────────────────────────────────────────────────────────────
+# Database dumps
+#
+# Postgres data directories must NOT be captured with a plain file copy while
+# the server is running: the result is a torn snapshot that may refuse to
+# start. Dump them through the server instead.
+#
+# Note that immich-postgres is deliberately absent here. Immich runs its own
+# nightly dump into /volume1/immich/upload/backups/ (14 retained); we copy the
+# newest one rather than dumping a second time.
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
+echo "=== Database dumps ==="
+
+# TeslaMate - drive/charge history, years of data, not regenerable
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^teslamate-db$'; then
+  echo -n "Dumping teslamate-db... "
+  mkdir -p "$BACKUP_DIR/teslamate-db"
+  if docker exec teslamate-db pg_dump -U teslamate -d teslamate --format=custom \
+      > "$BACKUP_DIR/teslamate-db/teslamate.dump" 2>/dev/null \
+     && [ -s "$BACKUP_DIR/teslamate-db/teslamate.dump" ]; then
+    SIZE=$(du -sh "$BACKUP_DIR/teslamate-db/teslamate.dump" 2>/dev/null | cut -f1)
+    echo "OK ($SIZE)"
+    BACKED_UP=$((BACKED_UP + 1))
+  else
+    echo "FAILED (pg_dump error or empty output)"
+    rm -rf "$BACKUP_DIR/teslamate-db"
+    FAILED=$((FAILED + 1))
+  fi
+else
+  echo "Skipping teslamate-db (container not running)"
+  SKIPPED=$((SKIPPED + 1))
+fi
+
+# Immich - copy the newest of Immich's own scheduled dumps.
+# The photo/video originals are far too large for this tarball; they go
+# off-site separately via scripts/backup-to-b2.sh.
+IMMICH_BACKUP_DIR="/volume1/immich/upload/backups"
+if [ -d "$IMMICH_BACKUP_DIR" ]; then
+  echo -n "Copying newest Immich DB dump... "
+  NEWEST_IMMICH=$(ls -t "$IMMICH_BACKUP_DIR"/immich-db-backup-*.sql.gz 2>/dev/null | head -1)
+  if [ -n "$NEWEST_IMMICH" ] && [ -s "$NEWEST_IMMICH" ]; then
+    # Warn if Immich's scheduled dump has stopped running
+    DUMP_AGE_DAYS=$(( ( $(date +%s) - $(stat -c %Y "$NEWEST_IMMICH") ) / 86400 ))
+    mkdir -p "$BACKUP_DIR/immich-db"
+    if cp -p "$NEWEST_IMMICH" "$BACKUP_DIR/immich-db/" 2>/dev/null; then
+      SIZE=$(du -sh "$NEWEST_IMMICH" 2>/dev/null | cut -f1)
+      echo "OK ($SIZE, ${DUMP_AGE_DAYS}d old)"
+      BACKED_UP=$((BACKED_UP + 1))
+      if [ "$DUMP_AGE_DAYS" -gt 2 ]; then
+        echo "  WARNING: newest Immich dump is ${DUMP_AGE_DAYS} days old."
+        echo "           Check Administration -> Settings -> Backup Settings in Immich."
+        notify_failure "Immich DB dump is stale (${DUMP_AGE_DAYS} days old)"
+      fi
+    else
+      echo "FAILED (copy error)"
+      FAILED=$((FAILED + 1))
+    fi
+  else
+    echo "FAILED (no dumps found in $IMMICH_BACKUP_DIR)"
+    notify_failure "No Immich DB dumps found - Immich's scheduled backup may be disabled"
+    FAILED=$((FAILED + 1))
+  fi
+else
+  echo "Skipping Immich DB (${IMMICH_BACKUP_DIR} not found)"
+  SKIPPED=$((SKIPPED + 1))
+fi
+
 echo ""
 echo "Summary: $BACKED_UP backed up, $SKIPPED skipped, $FAILED failed"
 TOTAL_SIZE=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
@@ -263,9 +359,20 @@ if [ "$CREATE_TAR" = true ]; then
   echo ""
   echo "Creating tarball..."
 
-  # Exclude socket files (qbittorrent ipc-socket) - they can't be archived
+  # Exclusions, in order:
+  #   ipc-socket        - qbittorrent socket, cannot be archived at all
+  #   recyclarr resources - a clone of the TRaSH-Guides repo (~293MB), re-cloned
+  #                       on the next sync; by far the largest thing in here
+  #   logs / logs.db    - application logs, no restore value
+  #   Sentry            - crash-report spool, no restore value
+  # Together these cut the archive by roughly 390MB per night, which matters
+  # because every byte is re-uploaded to B2 daily (the .tar.gz changes wholly).
   tar -czf "$TARBALL" \
     --exclude='*/ipc-socket' \
+    --exclude='*/recyclarr-config/resources' \
+    --exclude='*/logs' \
+    --exclude='*/logs.db' \
+    --exclude='*/Sentry' \
     -C "$(dirname "$BACKUP_DIR")" \
     "$(basename "$BACKUP_DIR")" 2>/dev/null
 
@@ -290,26 +397,32 @@ if [ "$CREATE_TAR" = true ]; then
         TARBALL="$FINAL_TARBALL"
         echo "Moved to: $TARBALL"
       else
-        notify_failure "Could not move tarball to ${FINAL_DEST}. Backup remains in /tmp."
+        notify_failure "Could not move tarball to ${FINAL_DEST}. Backup remains in ${STAGING_ROOT}."
       fi
     fi
   fi
 
+  # Drop the uncompressed staging tree now that it is archived. Skipped when the
+  # tarball could not be moved, so the only copy is never thrown away.
+  if [ "$TARBALL" != "${BACKUP_DIR}.tar.gz" ] || [ -z "$FINAL_DEST" ]; then
+    rm -rf "${BACKUP_DIR:?}"
+  else
+    echo "Keeping staging dir $BACKUP_DIR (tarball was not moved)"
+  fi
+
   echo ""
   echo "To copy off-NAS:"
-  echo "  # Ugreen NAS (scp doesn't work with /tmp):"
+  echo "  # Ugreen NAS (scp doesn't work):"
   echo "  ssh user@nas 'cat $TARBALL' > ./backup.tar.gz"
-  echo ""
-  echo "  # Other systems:"
-  echo "  scp user@nas:$TARBALL ./backup.tar.gz"
 fi
 
 # Safety check runs via EXIT trap (ensure_services_running)
 
 echo ""
-if [[ "$TARBALL" == /tmp/* ]] || [ -z "$TARBALL" ]; then
-  echo "NOTE: Backup is in /tmp which is cleared on reboot."
-  echo "      Copy the tarball off-NAS before rebooting!"
+if [[ "${TARBALL:-}" == /tmp/* ]]; then
+  echo "NOTE: Backup is in /tmp, which is cleared on reboot and lives on the"
+  echo "      eMMC boot device. Pass --staging and a destination on a data"
+  echo "      volume for anything scheduled."
 fi
 echo ""
 echo "To restore: docker run --rm -v ./backup/VOLUME:/src:ro -v ${VOLUME_PREFIX}_VOLUME:/dst alpine cp -a /src/. /dst/"

@@ -313,45 +313,87 @@ UGOS handles automatic updates natively (no Watchtower needed):
 
 ## Backups
 
-### Prerequisites
+Two layers: a local config tarball on `volume2`, and an off-site copy in Backblaze B2.
 
-**USB drive mounted at `/mnt/arr-backup`** for automated backups. Without it, backups stay in `/tmp` (cleared on reboot).
+### Automated Daily Schedule (root crontab)
 
-### Automated Daily Backup (6am)
-
-Cron runs daily at 6am:
 ```
-0 6 * * * /volume2/docker/arr-stack/scripts/backup-volumes.sh --tar /mnt/arr-backup >> /var/log/arr-backup.log 2>&1
+30 3 * * * cd /volume2/docker/arr-stack && ./scripts/backup-volumes.sh --tar --staging /volume2/docker/arr-stack-staging /volume2/docker/arr-stack-backups >> /var/log/arr-backup.log 2>&1
+0  5 * * * /volume2/docker/arr-stack/scripts/backup-to-b2.sh >> /var/log/arr-backup.log 2>&1
 ```
 
-**How it works:**
-1. Creates backup in `/tmp` first (reliable space)
-2. Creates tarball (~13MB)
-3. Checks actual tarball size vs USB space
-4. Moves to USB only if space available
-5. Falls back to `/tmp` with warning if USB full
-6. EXIT trap ensures services stay running no matter what
+03:30 builds the tarball (Immich writes its own DB dump at 02:00, so the tarball
+always picks up a fresh one). 05:00 pushes both the tarball and the Immich
+library off-site. Neither job stops any service.
 
-**Does NOT stop services** - safe live backup. Keeps 7 days on USB.
+**Staging matters**: assemble in `/volume2/docker/arr-stack-staging`, never in
+`/tmp` (eMMC boot device, several hundred MB of flash writes a night) and never
+inside `/volume2/docker/arr-stack-backups` (the B2 sync would upload the whole
+uncompressed tree).
 
-### Manual Backup / Pull to Local
+### Off-site: Backblaze B2
+
+`scripts/backup-to-b2.sh` drives the `rclone` container. That service sits behind
+a `backup` compose profile, so `up -d --force-recreate` never starts it.
 
 ```bash
-# Run backup manually on NAS
-ssh <user>@<nas-host> "cd /volume2/docker/arr-stack && ./scripts/backup-volumes.sh --tar"
+./scripts/backup-to-b2.sh              # all jobs (stack, files, immich)
+./scripts/backup-to-b2.sh immich       # photos only
+./scripts/backup-to-b2.sh files        # personal media only
+./scripts/backup-to-b2.sh --dry-run    # show what would transfer
 
-# Pull from /tmp to local repo (gitignored backups/ folder)
-ssh <user>@<nas-host> "cat /tmp/arr-stack-backup-*.tar.gz" > backups/arr-stack-backup-$(date +%Y%m%d).tar.gz
-
-# Or pull from USB drive
-ssh <user>@<nas-host> "cat /mnt/arr-backup/arr-stack-backup-*.tar.gz" > backups/arr-stack-backup-$(date +%Y%m%d).tar.gz
+# ad-hoc rclone against the bucket
+docker compose -f docker-compose.arr-stack.yml run --rm rclone ls b2:bibous-backup
 ```
+
+Three jobs: `stack` (config tarballs), `files` (personal media, ~88GB), and
+`immich` (~170GB). All are one-way: `rclone sync` only writes to B2, every
+source is mounted `:ro`, and deletions become hidden versions reclaimed after 30
+days. To add a directory to `files`, mount it read-only on the rclone service
+**and** add an entry to `FILE_SETS`; see `docs/BACKUP.md`.
+
+Credentials live in `.env` as `B2_ACCOUNT_ID` / `B2_APP_KEY` / `B2_BUCKET` and
+reach rclone through `RCLONE_CONFIG_B2_*` env vars, so no `rclone.conf` on disk
+holds the key. Optional `B2_BWLIMIT` throttles the upload; `B2_MAX_DELETE`
+(default 500) aborts a sync that would delete too much off-site.
 
 ### What's Backed Up
 
-**Included** (~13MB compressed): gluetun, qbittorrent, prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, seerr, sabnzbd configs.
+**Local tarball** (~198MB, 7 days retained): gluetun, qbittorrent, sabnzbd,
+prowlarr, bazarr, uptime-kuma, pihole-dnsmasq, tailscale-state, recyclarr,
+vaultwarden, seerr configs, plus a `pg_dump` of teslamate-db and the newest
+Immich DB dump.
 
-**Excluded** (regeneratable): jellyfin-config (407MB), sonarr (43MB), radarr (110MB), pihole blocklists (138MB).
+**B2** (~170GB): everything above, plus `/volume1/immich/upload` minus `thumbs/`
+and `encoded-video/`.
+
+**Excluded as regeneratable**: jellyfin-config, sonarr, radarr, pihole
+blocklists, recyclarr `resources/` (a 293MB TRaSH-Guides clone), all `logs/`,
+`logs.db`, and `Sentry/`. Immich `thumbs/` and `encoded-video/` (53GB) rebuild
+from the originals.
+
+**Never file-copy a live Postgres data directory.** `teslamate-db` and
+`immich-postgres` are captured as dumps, not volume copies, because a copy taken
+while the server is running can be torn and refuse to start.
+
+### Restore
+
+```bash
+# A config volume
+docker run --rm -v ./backup/VOLUME:/src:ro -v arr-stack_VOLUME:/dst alpine cp -a /src/. /dst/
+
+# TeslaMate database
+docker exec -i teslamate-db pg_restore -U teslamate -d teslamate --clean < teslamate.dump
+
+# Immich database
+gunzip -c immich-db-backup-*.sql.gz | docker exec -i immich-postgres psql -U postgres -d immich
+```
+
+### Pull a Backup to Local
+
+```bash
+ssh <user>@<nas-host> "cat /volume2/docker/arr-stack-backups/arr-stack-backup-*.tar.gz" > backups/arr-stack-backup-$(date +%Y%m%d).tar.gz
+```
 
 ## Uptime Kuma SQLite
 

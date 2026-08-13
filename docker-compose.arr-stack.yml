@@ -739,3 +739,48 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RCLONE - Off-site backup to Backblaze B2. No web UI, no daemon.
+  #
+  # The "backup" profile keeps this OUT of `up -d` / `up -d --force-recreate`.
+  # It only runs when invoked explicitly:
+  #   docker compose -f docker-compose.arr-stack.yml run --rm rclone lsd b2:
+  #
+  # Driven by scripts/backup-to-b2.sh, which cron calls daily. The B2 remote is
+  # configured entirely through RCLONE_CONFIG_B2_* env vars, so there is no
+  # rclone.conf on disk holding the application key.
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Deliberately no container_name and no static IP, unlike every other service
+  # here. This one is invoked with `compose run`, which starts a fresh throwaway
+  # container each time; a fixed name and a reserved address let only one run
+  # exist at a time, so an ad-hoc `rclone ls` would fail with "Address already
+  # in use" while the nightly sync is still going. Nothing connects to rclone,
+  # so it needs no stable address.
+  rclone:
+    image: rclone/rclone:1.75
+    profiles: ["backup"]
+    environment:
+      - TZ=${TZ}
+      - RCLONE_CONFIG_B2_TYPE=b2
+      - RCLONE_CONFIG_B2_ACCOUNT=${B2_ACCOUNT_ID}
+      - RCLONE_CONFIG_B2_KEY=${B2_APP_KEY}
+      # Deletes become hidden versions rather than permanent removals, so the
+      # bucket lifecycle rule governs how long a deleted file stays recoverable.
+      - RCLONE_CONFIG_B2_HARD_DELETE=false
+    volumes:
+      # Every source is read-only: an rclone sync is one-way by design, and a
+      # read-only mount makes that structural rather than a matter of getting
+      # the command right.
+      - /volume1/immich/upload:/data/immich:ro
+      - /volume2/docker/arr-stack-backups:/data/stack:ro
+      - /home/uesh/Photos/Harmony:/data/harmony:ro
+      - /volume1/Audio:/data/audio:ro
+      - /volume1/Photos:/data/photos:ro
+      # Accented host path is deliberately confined to this one line; the
+      # container path stays ASCII so no script has to carry the literal.
+      - /volume1/Vidéos:/data/videos:ro
+    networks:
+      - arr-stack
+    restart: "no"
+    logging: *default-logging
