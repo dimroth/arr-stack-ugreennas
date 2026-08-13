@@ -1,6 +1,9 @@
 # Environment & Secrets
 .env
-.env.nas.backup
+# Any .env sidecar (timestamped backups, .env.local, etc) holds the same
+# secrets as .env itself. Ignore them all, keep the tracked template.
+.env.*
+!.env.example
 *.key
 *.pem
 *.crt
