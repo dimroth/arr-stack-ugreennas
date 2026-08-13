@@ -237,12 +237,16 @@ sync_files() {
     # NAS and OS bookkeeping, none of it worth off-site storage. Excluding
     # #recycle matters beyond the few KB it occupies today: without it, deleting
     # a large file on the NAS would quietly push a copy of it off-site.
+    # Filter patterns are deliberately bare, not "**/name". In rclone a pattern
+    # without a leading / matches at any depth, whereas "**/name" requires at
+    # least one directory component and so silently misses a file sitting at the
+    # root of the set. Verified: "**/.DS_Store" left 1 of 2 behind here.
     if run_rclone sync "$cpath" "b2:${B2_BUCKET}/files/${name}" \
         --exclude "/#recycle/**" \
-        --exclude "**/@eaDir/**" \
-        --exclude "**/desktop.ini" \
-        --exclude "**/.DS_Store" \
-        --exclude "**/Thumbs.db" \
+        --exclude "@eaDir/**" \
+        --exclude "desktop.ini" \
+        --exclude ".DS_Store" \
+        --exclude "Thumbs.db" \
         "${RCLONE_FLAGS[@]}"; then
       log "  ${name}: OK"
     else
